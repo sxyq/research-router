@@ -1,0 +1,10 @@
+{
+  "id": "douyin-skills",
+  "display_name": "Douyin Skills",
+  "role": "Chinese Douyin exploration and public-content workflows",
+  "kind": "platform-specialist",
+  "source": "https://github.com/zJay26/douyin-skills",
+  "load": "on-demand",
+  "platforms": ["douyin"],
+  "status": "candidate-verified-source"
+}

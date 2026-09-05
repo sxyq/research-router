@@ -1,0 +1,12 @@
+{
+  "platform_id": "v2ex",
+  "display_name": "V2EX",
+  "aliases": ["v2ex"],
+  "capabilities": ["hot", "latest", "node", "topic detail", "replies"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli", "last30days-cn"]
+  },
+  "notes": "Use last30days-cn for time-bounded community heat, not as the default light entry."
+}

@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "skills": [
+    {
+      "id": "autocli",
+      "display_name": "AutoCLI Skill",
+      "role": "multi-platform discovery and content reading",
+      "kind": "general-multi-platform",
+      "source": "https://github.com/nashsu/autocli-skill",
+      "load": "on-demand",
+      "platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow"],
+      "limits": ["GitHub is CLI passthrough rather than source analysis", "TikTok is not the same as Chinese Douyin"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "douyin-skills",
+      "display_name": "Douyin Skills",
+      "role": "Chinese Douyin exploration and public-content workflows",
+      "kind": "platform-specialist",
+      "source": "https://github.com/zJay26/douyin-skills",
+      "load": "on-demand",
+      "platforms": ["douyin"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "xiaohongshu-skills",
+      "display_name": "XiaohongshuSkills",
+      "role": "Xiaohongshu detail, comments, interaction, and content data",
+      "kind": "platform-specialist",
+      "source": "https://github.com/white0dew/XiaohongshuSkills",
+      "load": "on-demand",
+      "platforms": ["xiaohongshu"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "github-search",
+      "display_name": "GitHub Search",
+      "role": "repository discovery by use case, topic, or trend",
+      "kind": "platform-specialist",
+      "source": "https://github.com/hsergiu/github-huggingface-search-skills",
+      "load": "on-demand",
+      "platforms": ["github"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "github-analyze",
+      "display_name": "GitHub Analyze",
+      "role": "repository tree, source, dependency, test, Issue, and Release analysis",
+      "kind": "platform-specialist",
+      "source": "https://github.com/hsergiu/github-huggingface-search-skills",
+      "load": "on-demand",
+      "platforms": ["github"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "last30days-cn",
+      "display_name": "Last30Days CN",
+      "role": "recent Chinese-community heat and multi-platform discussion",
+      "kind": "general-research-specialist",
+      "source": "https://github.com/hwwn/last30days-skill-cn",
+      "load": "on-demand",
+      "platforms": ["bilibili", "douyin", "xiaohongshu", "v2ex", "github"],
+      "status": "deep-or-recency-only"
+    },
+    {
+      "id": "anysearch",
+      "display_name": "AnySearch",
+      "role": "general, vertical, batch, and full-page search",
+      "kind": "general-web-search",
+      "source": "https://github.com/anysearch-ai/anysearch-skill",
+      "load": "on-demand",
+      "platforms": ["academic", "stackoverflow"],
+      "status": "candidate-verified-source"
+    },
+    {
+      "id": "literature-evidence-audit",
+      "display_name": "Literature Evidence Audit",
+      "role": "primary-paper PDF evidence verification",
+      "kind": "academic-evidence",
+      "source": "local:${CODEX_HOME}/skills/literature-evidence-audit/SKILL.md",
+      "load": "on-demand",
+      "platforms": ["academic"],
+      "status": "local-installed"
+    },
+    {
+      "id": "paper-research-router",
+      "display_name": "Paper Research Router",
+      "role": "local academic workflow selection",
+      "kind": "academic-router",
+      "source": "local:${CODEX_HOME}/skills/paper-research-router/SKILL.md",
+      "load": "on-demand",
+      "platforms": ["academic"],
+      "status": "local-installed"
+    }
+  ]
+}

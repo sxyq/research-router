@@ -1,0 +1,12 @@
+{
+  "id": "autocli",
+  "display_name": "AutoCLI Skill",
+  "role": "multi-platform discovery and content reading",
+  "kind": "general-multi-platform",
+  "source": "https://github.com/nashsu/autocli-skill",
+  "upstream": "https://github.com/nashsu/AutoCLI",
+  "load": "on-demand",
+  "platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow"],
+  "limits": ["GitHub is CLI passthrough rather than source analysis", "TikTok is not the same as Chinese Douyin"],
+  "status": "candidate-verified-source"
+}

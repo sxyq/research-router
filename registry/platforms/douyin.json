@@ -1,0 +1,12 @@
+{
+  "platform_id": "douyin",
+  "display_name": "中国抖音",
+  "aliases": ["抖音", "中国抖音", "douyin"],
+  "capabilities": ["public video search", "trending topics", "public detail"],
+  "depth_routes": {
+    "light": [],
+    "medium": ["douyin-skills"],
+    "deep": ["douyin-skills", "last30days-cn"]
+  },
+  "notes": "Do not infer Chinese Douyin coverage from a TikTok adapter. Light mode skips this platform unless the user explicitly requests it."
+}

@@ -1,0 +1,12 @@
+{
+  "platform_id": "bilibili",
+  "display_name": "B站",
+  "aliases": ["b站", "哔哩哔哩", "bilibili"],
+  "capabilities": ["search", "hot", "video metadata", "subtitle when available"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli", "last30days-cn"]
+  },
+  "notes": "Recent-30-day discussion or heat requests may add last30days-cn."
+}

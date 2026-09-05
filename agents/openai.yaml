@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Router"
+  short_description: "Route research by scene, depth, platform, and evidence"
+  default_prompt: "Use $research-router to route this bug-fix, open-source, Skill, or academic research request and record the final leaf Skill path."
+policy:
+  allow_implicit_invocation: true

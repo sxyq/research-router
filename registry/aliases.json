@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "aliases": {
+    "b站": "bilibili",
+    "哔哩哔哩": "bilibili",
+    "bilibili": "bilibili",
+    "抖音": "douyin",
+    "中国抖音": "douyin",
+    "douyin": "douyin",
+    "tiktok": "tiktok",
+    "小红书": "xiaohongshu",
+    "xhs": "xiaohongshu",
+    "xiaohongshu": "xiaohongshu",
+    "linux.do": "linux-do",
+    "linux do": "linux-do",
+    "v2ex": "v2ex",
+    "github": "github",
+    "git hub": "github",
+    "arxiv": "academic",
+    "论文": "academic",
+    "学术": "academic",
+    "文献": "academic",
+    "stackoverflow": "stackoverflow",
+    "stack overflow": "stackoverflow",
+    "报错": "bug-fix",
+    "bug": "bug-fix",
+    "修bug": "bug-fix",
+    "修复问题": "bug-fix"
+  }
+}

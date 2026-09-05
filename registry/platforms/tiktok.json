@@ -1,0 +1,12 @@
+{
+  "platform_id": "tiktok",
+  "display_name": "TikTok",
+  "aliases": ["tiktok"],
+  "capabilities": ["video search", "explore", "profile", "public engagement metadata"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "TikTok is tracked separately from Chinese Douyin; do not infer one platform's availability from the other."
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Router Platform Entry",
+  "type": "object",
+  "required": ["platform_id", "display_name", "capabilities", "depth_routes"],
+  "properties": {
+    "platform_id": {"type": "string"},
+    "display_name": {"type": "string"},
+    "aliases": {"type": "array", "items": {"type": "string"}},
+    "capabilities": {"type": "array", "items": {"type": "string"}},
+    "depth_routes": {"type": "object", "required": ["light", "medium", "deep"]}
+  }
+}

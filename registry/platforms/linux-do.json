@@ -1,0 +1,12 @@
+{
+  "platform_id": "linux-do",
+  "display_name": "Linux.do",
+  "aliases": ["linux.do", "linux do"],
+  "capabilities": ["topic search", "hot", "latest", "category", "topic detail"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "Use live help and login-state checks before relying on a browser-backed command."
+}

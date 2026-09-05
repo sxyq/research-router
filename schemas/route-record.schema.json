@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sxyq/research-router/schema/route-record.schema.json",
+  "title": "Research Router Route Record",
+  "type": "object",
+  "required": ["route_id", "created_at", "scene", "interaction_mode", "depth", "query_variants", "platforms", "final_leaf_skills", "status"],
+  "properties": {
+    "route_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "request_summary": {"type": "string"},
+    "context_summary": {"type": "string"},
+    "scene": {"enum": ["bug-fix", "open-source", "academic"]},
+    "interaction_mode": {"enum": ["direct", "clarify"]},
+    "depth": {"enum": ["light", "medium", "deep"]},
+    "query_variants": {"type": "array", "items": {"type": "string"}},
+    "platforms": {"type": "array", "items": {"$ref": "#/$defs/platform"}},
+    "matched_skills": {"type": "array", "items": {"$ref": "#/$defs/skill"}},
+    "final_leaf_skills": {"type": "array", "items": {"type": "string"}},
+    "failures": {"type": "array", "items": {"$ref": "#/$defs/failure"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "user_feedback": {"type": ["object", "null"]},
+    "status": {"enum": ["planned", "running", "completed", "partial", "failed"]}
+  },
+  "$defs": {
+    "platform": {
+      "type": "object",
+      "required": ["platform_id", "agent_id", "skill_order"],
+      "properties": {
+        "platform_id": {"type": "string"},
+        "agent_id": {"type": "string"},
+        "skill_order": {"type": "array", "items": {"type": "string"}},
+        "status": {"type": "string"}
+      }
+    },
+    "skill": {
+      "type": "object",
+      "required": ["skill_id", "reason"],
+      "properties": {
+        "skill_id": {"type": "string"},
+        "reason": {"type": "string"},
+        "score": {"type": "number", "minimum": 0, "maximum": 10}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "required": ["code", "summary"],
+      "properties": {
+        "code": {"type": "string"},
+        "summary": {"type": "string"},
+        "skill_id": {"type": "string"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["url", "status"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "status": {"enum": ["verified", "partial", "unavailable", "contradicted"]},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}

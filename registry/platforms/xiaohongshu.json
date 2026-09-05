@@ -1,0 +1,12 @@
+{
+  "platform_id": "xiaohongshu",
+  "display_name": "小红书",
+  "aliases": ["小红书", "xhs", "xiaohongshu"],
+  "capabilities": ["note search", "feed", "detail", "comments", "interaction", "content data"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli", "xiaohongshu-skills"],
+    "deep": ["autocli", "xiaohongshu-skills", "last30days-cn"]
+  },
+  "notes": "Use the specialist when detail, comments, interactions, or content data are required."
+}

@@ -1,0 +1,13 @@
+{
+  "platform_id": "academic",
+  "display_name": "论文与学术",
+  "aliases": ["论文", "学术", "文献", "arxiv"],
+  "capabilities": ["paper discovery", "author and venue lookup", "full-text retrieval", "citation evidence"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["anysearch", "paper-research-router"],
+    "deep": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+  },
+  "source_requirement": "A claim-support check requires the primary paper body or PDF, not title or abstract alone.",
+  "agent_rule": "One academic Agent runs discovery before evidence verification."
+}

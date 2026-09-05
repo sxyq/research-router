@@ -1,0 +1,12 @@
+{
+  "platform_id": "stackoverflow",
+  "display_name": "Stack Overflow",
+  "aliases": ["stackoverflow", "stack overflow"],
+  "capabilities": ["error messages", "API usage", "code patterns", "accepted answers"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli", "github-analyze"],
+    "deep": ["autocli", "github-analyze", "anysearch"]
+  },
+  "notes": "For a repository-specific bug, use GitHub issues, commits, source, and tests as the primary evidence path."
+}

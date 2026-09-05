@@ -1,0 +1,10 @@
+{
+  "id": "xiaohongshu-skills",
+  "display_name": "XiaohongshuSkills",
+  "role": "Xiaohongshu detail, comments, interaction, and content data",
+  "kind": "platform-specialist",
+  "source": "https://github.com/white0dew/XiaohongshuSkills",
+  "load": "on-demand",
+  "platforms": ["xiaohongshu"],
+  "status": "candidate-verified-source"
+}

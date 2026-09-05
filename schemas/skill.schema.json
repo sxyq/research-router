@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Router Skill Entry",
+  "type": "object",
+  "required": ["id", "display_name", "role", "kind", "source", "platforms", "status"],
+  "properties": {
+    "id": {"type": "string"},
+    "display_name": {"type": "string"},
+    "role": {"type": "string"},
+    "kind": {"type": "string"},
+    "source": {"type": "string"},
+    "load": {"enum": ["on-demand"]},
+    "platforms": {"type": "array", "items": {"type": "string"}},
+    "limits": {"type": "array", "items": {"type": "string"}},
+    "status": {"type": "string"}
+  }
+}

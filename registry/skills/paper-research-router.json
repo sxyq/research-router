@@ -1,0 +1,10 @@
+{
+  "id": "paper-research-router",
+  "display_name": "Paper Research Router",
+  "role": "local academic workflow selection",
+  "kind": "academic-router",
+  "source": "local:${CODEX_HOME}/skills/paper-research-router/SKILL.md",
+  "load": "on-demand",
+  "platforms": ["academic"],
+  "status": "local-installed"
+}

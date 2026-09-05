@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Runtime records stay in the local Skill directory and are not published.
+records/routes/*
+records/feedback/*
+records/summaries/*
+!records/routes/.gitkeep
+!records/feedback/.gitkeep
+!records/summaries/.gitkeep
+
+# Local tuning output and private runtime material stay local.
+tuning/proposals/*
+tuning/history/*
+!tuning/proposals/.gitkeep
+!tuning/history/.gitkeep
