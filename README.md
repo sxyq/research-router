@@ -273,29 +273,4 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
 
 计算方式：`F×25% + R×20% + E×20% + V×15% + S×20%`。
 
-## 校验
 
-```bash
-python3 scripts/validate-registry.py
-python3 scripts/validate-route-record.py path/to/route.json
-python3 scripts/summarize-feedback.py
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" .
-```
-
-固定路由案例位于 `tests/routing-cases/basic-cases.json`。这些案例只检查预期路由，不调用网络平台。
-
-## 隐私边界
-
-公开仓库不包含：
-
-- 浏览器 Cookie、Token 或账号数据
-- 原始查询结果和大段上下文
-- 本地运行记录与评分记录
-- Trellis 文件或项目源码
-- MCP 配置
-
-运行记录和调优文件通过 `.gitignore` 保留在本机 Skill 目录，供后续调整路由时使用。
-
-## 状态
-
-这是一个可运行的第一版 Skill 结构。第三方 Skill 的仓库存在和文档能力已经写入注册表；具体登录态、依赖和平台运行成功仍需在调用时单独验证。
