@@ -6,8 +6,13 @@
   "depth_routes": {
     "light": ["autocli"],
     "medium": ["anysearch", "paper-research-router"],
-    "deep": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+    "deep": ["anysearch", "paper-research-router", "academic-evidence"]
   },
   "source_requirement": "A claim-support check requires the primary paper body or PDF, not title or abstract alone.",
-  "agent_rule": "One academic Agent runs discovery before evidence verification."
+  "agent_rule": "One academic Agent runs discovery first, then the Router explicitly calls academic-evidence when the evidence requirement needs it.",
+  "post_discovery": {
+    "when": ["claim support", "PDF body text", "citation audit", "evidence table", "local PDFs", "normalized citation metadata"],
+    "append": ["academic-evidence"],
+    "stage": "evidence-processing"
+  }
 }

@@ -73,14 +73,25 @@
       "status": "candidate-verified-source"
     },
     {
-      "id": "literature-evidence-audit",
-      "display_name": "Literature Evidence Audit",
-      "role": "primary-paper PDF evidence verification",
-      "kind": "academic-evidence",
-      "source": "local:${CODEX_HOME}/skills/literature-evidence-audit/SKILL.md",
+      "id": "forum-search",
+      "display_name": "Discourse Forum Search",
+      "role": "public Discourse community search and topic reading",
+      "kind": "local-protocol-adapter",
+      "source": "local:${CODEX_HOME}/skills/research-router/scripts/discourse_search.py",
       "load": "on-demand",
+      "platforms": ["discourse"],
+      "status": "local-included",
+      "limits": ["Requires a public Discourse JSON endpoint", "Does not cover X, Lobsters, or custom forum APIs"]
+    },
+    {
+      "id": "academic-evidence",
+      "display_name": "Academic Evidence Processing",
+      "role": "post-discovery primary-paper PDF evidence verification",
+      "kind": "internal-academic-evidence",
+      "source": "local:${CODEX_HOME}/skills/research-router/academic-evidence/SKILL.md",
+      "load": "after-discovery-on-evidence-request",
       "platforms": ["academic"],
-      "status": "local-installed"
+      "status": "local-included"
     },
     {
       "id": "paper-research-router",

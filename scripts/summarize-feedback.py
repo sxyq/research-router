@@ -13,20 +13,19 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]) if len(argv) > 1 else Path(__file__).resolve().parents[1] / "records" / "feedback"
     output = Path(argv[2]) if len(argv) > 2 else Path(__file__).resolve().parents[1] / "records" / "summaries" / "feedback-summary.json"
     files = sorted(root.rglob("*.json")) if root.exists() else []
-    router_scores: list[float] = []
     skill_scores: dict[str, list[float]] = defaultdict(list)
     route_count = 0
     invalid = 0
     for path in files:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            router = data["scores"]["router"]
-            if not isinstance(router, (int, float)) or not 0 <= router <= 10:
+            skill_id = data["target_skill_id"]
+            score = data["score"]
+            if not isinstance(skill_id, str) or not skill_id.strip():
                 raise ValueError
-            router_scores.append(float(router))
-            for skill_id, score in data["scores"].get("skills", {}).items():
-                if isinstance(score, (int, float)) and 0 <= score <= 10:
-                    skill_scores[skill_id].append(float(score))
+            if not isinstance(score, (int, float)) or not 0 <= score <= 10:
+                raise ValueError
+            skill_scores[skill_id].append(float(score))
             route_count += 1
         except (OSError, UnicodeError, ValueError, KeyError, TypeError, json.JSONDecodeError):
             invalid += 1
@@ -37,7 +36,6 @@ def main(argv: list[str]) -> int:
     summary = {
         "feedback_records": route_count,
         "invalid_files": invalid,
-        "router_average": average(router_scores),
         "skill_averages": {
             skill_id: average(values) for skill_id, values in sorted(skill_scores.items())
         },

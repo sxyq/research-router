@@ -3,18 +3,21 @@
     "name": "light-open-source-multi-platform",
     "scene": "open-source",
     "depth": "light",
+    "expected_sub_agents": 0,
     "expected": ["autocli"]
   },
   {
     "name": "medium-github-source-review",
     "scene": "open-source",
     "depth": "medium",
+    "expected_sub_agents": {"default": 2, "max": 4},
     "expected": ["github-search", "github-analyze"]
   },
   {
     "name": "deep-paper-evidence",
     "scene": "academic",
     "depth": "deep",
-    "expected": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+    "expected_sub_agents": "unbounded",
+    "expected": ["anysearch", "paper-research-router", "academic-evidence"]
   }
 ]

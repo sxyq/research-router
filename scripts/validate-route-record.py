@@ -80,23 +80,15 @@ def validate_route(value: dict) -> list[str]:
 def validate_feedback(value: dict) -> list[str]:
     errors = [
         f"missing field: {key}"
-        for key in ("feedback_id", "route_id", "created_at", "scores")
+        for key in ("feedback_id", "route_id", "created_at", "target_skill_id", "score")
         if key not in value
     ]
     if errors:
         return errors
-    scores = value["scores"]
-    if not isinstance(scores, dict):
-        return ["scores must be an object"]
-    if not isinstance(scores.get("router"), (int, float)) or not 0 <= scores["router"] <= 10:
-        errors.append("scores.router must be a number from 0 to 10")
-    skills = scores.get("skills")
-    if not isinstance(skills, dict):
-        errors.append("scores.skills must be an object")
-    else:
-        for skill_id, score in skills.items():
-            if not isinstance(skill_id, str) or not isinstance(score, (int, float)) or not 0 <= score <= 10:
-                errors.append(f"scores.skills[{skill_id!r}] must be a number from 0 to 10")
+    if not isinstance(value["target_skill_id"], str) or not value["target_skill_id"].strip():
+        errors.append("target_skill_id must be a non-empty string")
+    if not isinstance(value["score"], (int, float)) or not 0 <= value["score"] <= 10:
+        errors.append("score must be a number from 0 to 10")
     return errors
 
 

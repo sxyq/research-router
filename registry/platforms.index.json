@@ -9,7 +9,8 @@
     "v2ex",
     "github",
     "academic",
-    "stackoverflow"
+    "stackoverflow",
+    "discourse"
   ],
   "scenes": [
     "bug-fix",
@@ -20,5 +21,10 @@
     "autocli",
     "anysearch",
     "last30days-cn"
-  ]
+  ],
+  "depth_policy": {
+    "light": {"sub_agents": 0, "execution": "main-conversation"},
+    "medium": {"sub_agents": {"default": 2, "max": 4}, "execution": "bounded-parallel"},
+    "deep": {"sub_agents": "unbounded", "execution": "task-sized-parallel"}
+  }
 }

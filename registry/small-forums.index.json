@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "Small technical forum catalog",
+  "platform_group": "small-technical-communities",
+  "entries": [
+    {"id": "lobsters", "display_name": "Lobsters", "locale": "en", "priority": "high", "url": "https://lobste.rs", "topics": ["programming", "systems", "open-source", "engineering"], "adapter": "native-public", "status": "cataloged"},
+    {"id": "hacker-news", "display_name": "Hacker News", "locale": "en", "priority": "high", "url": "https://news.ycombinator.com", "topics": ["startups", "open-source", "technology", "projects"], "adapter": "native-public", "status": "cataloged"},
+    {"id": "hugging-face-forums", "display_name": "Hugging Face Forums", "locale": "en", "priority": "high", "url": "https://discuss.huggingface.co", "topics": ["models", "datasets", "inference", "training", "deployment"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "rust-users", "display_name": "Rust Users Forum", "locale": "en", "priority": "high", "url": "https://users.rust-lang.org", "topics": ["Rust", "compiler", "ecosystem"], "adapter": "discourse", "status": "verified-public-json"},
+    {"id": "swift-forums", "display_name": "Swift Forums", "locale": "en", "priority": "high", "url": "https://forums.swift.org", "topics": ["Swift", "SwiftUI", "compiler", "Apple platforms"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "android-developers", "display_name": "Android Developers Forum", "locale": "en", "priority": "high", "url": "https://support.google.com/android/community", "topics": ["Android", "Jetpack", "Compose", "system behavior"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "flutter-community", "display_name": "Flutter Community", "locale": "en", "priority": "high", "url": "https://forum.itsallwidgets.com", "topics": ["Flutter", "Dart", "plugins", "cross-platform"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "kubernetes-discuss", "display_name": "Kubernetes Discuss", "locale": "en", "priority": "medium", "url": "https://discuss.kubernetes.io", "topics": ["Kubernetes", "containers", "clusters", "cloud native"], "adapter": "discourse", "status": "verified-public-json"},
+    {"id": "docker-community", "display_name": "Docker Community Forums", "locale": "en", "priority": "medium", "url": "https://forums.docker.com", "topics": ["Docker", "images", "containers", "networking"], "adapter": "discourse", "status": "verified-public-json"},
+    {"id": "nixos-discourse", "display_name": "NixOS Discourse", "locale": "en", "priority": "medium", "url": "https://discourse.nixos.org", "topics": ["Nix", "NixOS", "packages", "system configuration"], "adapter": "discourse", "status": "verified-public-json"},
+    {"id": "openwrt-forum", "display_name": "OpenWrt Forum", "locale": "en-multi", "priority": "medium", "url": "https://forum.openwrt.org", "topics": ["routers", "firmware", "networking", "embedded"], "adapter": "specialist-planned", "status": "rate-limited-in-probe"},
+    {"id": "home-assistant-community", "display_name": "Home Assistant Community", "locale": "en", "priority": "medium", "url": "https://community.home-assistant.io", "topics": ["home automation", "devices", "integrations"], "adapter": "discourse", "status": "verified-public-json"},
+    {"id": "arch-linux-forums", "display_name": "Arch Linux Forums", "locale": "en", "priority": "medium", "url": "https://bbs.archlinux.org", "topics": ["Linux", "packages", "desktop", "system maintenance"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "gentoo-forums", "display_name": "Gentoo Forums", "locale": "en", "priority": "medium", "url": "https://forums.gentoo.org", "topics": ["Gentoo", "compilation", "kernel", "system customization"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "nodeseek", "display_name": "NodeSeek", "locale": "zh", "priority": "medium", "url": "https://www.nodeseek.com", "topics": ["VPS", "servers", "networking", "deployment", "hosting"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "hostloc", "display_name": "HostLoc", "locale": "zh", "priority": "medium", "url": "https://hostloc.com", "topics": ["hosting", "servers", "networking", "webmaster technology"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "ruby-china", "display_name": "Ruby China", "locale": "zh", "priority": "medium", "url": "https://ruby-china.org", "topics": ["Ruby", "Rails", "web development"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "gocn", "display_name": "GoCN 社区", "locale": "zh", "priority": "medium", "url": "https://gocn.vip", "topics": ["Go", "backend", "cloud native", "engineering"], "adapter": "specialist-planned", "status": "cataloged"},
+    {"id": "52pojie", "display_name": "52破解", "locale": "zh", "priority": "low", "url": "https://www.52pojie.cn", "topics": ["software", "systems", "reverse engineering", "tools"], "adapter": "specialist-planned", "status": "explicit-request-only"},
+    {"id": "indie-developer-community", "display_name": "独立开发者社区", "locale": "zh-multi", "priority": "low", "url": null, "topics": ["indie products", "tools", "commercialization", "practice"], "adapter": "site-required", "status": "cataloged"}
+  ]
+}

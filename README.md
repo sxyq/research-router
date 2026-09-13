@@ -35,10 +35,10 @@ flowchart LR
     A[用户目标] --> B[场景]
     B --> C[交互模式]
     C --> D[需求模型]
-    D --> E[多组查询词]
-    E --> F[平台与 Skill]
-    F --> G[查询深度]
-    G --> H[Agent 执行]
+    D --> E[平台与 Skill 语义匹配]
+    E --> F[查询深度]
+    F --> G[适配器查询表达]
+    G --> H[主对话或子代理执行]
     H --> I[证据核验]
     I --> J[叶子 Skill 路径与反馈]
 ```
@@ -46,12 +46,13 @@ flowchart LR
 ## 设计原则
 
 1. 先识别查询场景，再选择查询深度。
-2. 查询深度由需求派生词数量、证据要求和并行程度决定；平台数量由用户需求决定。
-3. `light` 优先使用一个综合多平台 Skill；`medium` 按平台分配 Agent；`deep` 并行多个平台 Agent。
-4. 一个 Agent 负责一个平台。同一平台命中多个 Skill 时，由该 Agent 按顺序执行。
+2. 先按需求语义匹配平台和 Skill，再由查询适配器生成站内搜索表达。
+3. 查询深度主要决定执行规模：`light` 不启动子代理，`medium` 默认 2 个且最多 4 个，`deep` 按任务需要扩展且不设固定上限。
+4. 每个子代理承担一个明确的平台或证据角色；同一角色命中多个 Skill 时按顺序执行。
 5. Router 只按需加载叶子 Skill，不扫描全部本地 Skill，不要求 MCP 作为直接依赖。
 6. GitHub 的源码结论需要继续读取目录、源码、依赖、测试、Issue 和 Release；论文证据需要核对正文或 PDF。
-7. 每次路由记录实际执行到的最终子 Skill；用户评分与 Router 评分、子 Skill 评分分别保存。
+7. 每次路由记录实际执行到的最终子 Skill；用户评分只绑定本次结果的最小最终 Skill。
+8. 小众技术论坛优先识别 Discourse 协议；公开站点可按需使用 `forum-search`，不把协议支持误认为所有论坛都可访问。
 
 ## 总体架构
 
@@ -61,11 +62,11 @@ flowchart TD
     R --> C[场景识别<br/>bug-fix / open-source / academic]
     C --> M[交互模式<br/>direct / clarify]
     M --> Q[需求模型<br/>目标 / 能力 / 限制 / 证据]
-    Q --> G[查询词生成<br/>多语言、多表达、多证据入口]
-    G --> I[内置注册表]
-    I --> P[平台匹配]
+    Q --> I[内置注册表]
+    I --> P[平台与 Skill 语义匹配]
     P --> D[深度选择<br/>light / medium / deep]
-    D --> A[平台 Agent]
+    D --> G[适配器输入生成<br/>站内字段、过滤条件、网页表达]
+    G --> A[主对话或平台 Agent]
     A --> S[按需加载外部叶子 Skill]
     S --> E[网页、README、源码、Issue、论文证据]
     E --> V[去重、排序、核验、汇总]
@@ -79,7 +80,7 @@ flowchart TD
 
 | 组件 | 负责内容 | 不负责内容 |
 | --- | --- | --- |
-| Router | 场景判断、需求拆解、查询词集合、深度、平台 Agent、去重、记录和调优入口 | 复制第三方 Skill、保存凭据、把静态注册当成运行成功 |
+| Router | 场景判断、需求拆解、适配器查询表达、子代理数量、平台 Agent、去重、记录和调优入口 | 复制第三方 Skill、保存凭据、把静态注册当成运行成功 |
 | 综合平台 Skill | 多个平台的搜索、读取和结果整理 | GitHub 源码级结论、论文正文证据的最终核验 |
 | 平台专项 Skill | 某个平台的详情、评论、互动或特殊接口 | 替代 Router 的全局路径决策 |
 | GitHub 分析 Skill | 目录、源码、依赖、测试、Issue、Release 和提交关系 | 仅凭标题或 README 下结论 |
@@ -116,8 +117,14 @@ research-router/
 │   ├── platforms.index.json         # 平台、场景和通用 Skill 索引
 │   ├── skills.index.json            # Skill 总索引
 │   ├── platforms/*.json             # 平台能力和三档路由
+│   ├── small-forums.index.json      # 小众社区清单与接入方式
 │   └── skills/*.json                # Skill 来源、能力和边界
 ├── references/                      # 按需读取的详细路由规则
+│   └── small-forums.md               # 小众论坛与 Discourse 接入边界
+├── academic-evidence/                # 查询完成后的内部文献证据处理
+│   ├── SKILL.md
+│   ├── references/
+│   └── scripts/
 ├── schemas/                         # 路由、反馈、平台和 Skill 的 JSON Schema
 ├── records/                         # 本地运行记录，不提交到公开仓库
 │   ├── routes/                      # 每次路由一个 JSON
@@ -125,6 +132,7 @@ research-router/
 │   └── summaries/                   # 评分汇总
 ├── tuning/                          # 本地调优建议和已采用策略
 ├── scripts/                         # 确定性校验和统计脚本
+│   └── discourse_search.py           # 公开 Discourse 搜索与主题读取
 └── tests/                           # 固定路由案例，不访问真实平台
 ```
 
@@ -139,36 +147,49 @@ research-router/
 | Linux.do | `autocli` | `autocli` | `autocli` |
 | V2EX | `autocli` | `autocli` | `autocli` + `last30days-cn` |
 | GitHub | `github-search` | `github-search` → `github-analyze` | 上述两项 + `last30days-cn` |
-| 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
+| 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加内部 `academic-evidence` |
+
+学术查询的调用顺序固定为“先发现，后处理证据”。`academic-evidence` 只在候选论文已经产生、且用户需要正文支撑或证据表时追加；它不参与第一阶段的论文发现。
+
+```mermaid
+flowchart LR
+    A[论文发现] --> B[候选论文清单]
+    B --> C{是否需要正文证据或 PDF？}
+    C -->|否| D[输出论文与元数据]
+    C -->|是| E[追加 academic-evidence]
+    E --> F[元数据整理]
+    F --> G[PDF 下载与编号]
+    G --> H[正文引文核验]
+    H --> I[证据表生成与复核]
+```
 
 `qiaomu-smart-search` 与 AutoCLI/OpenCLI 属于重叠入口，当前不放入默认活动路由。需要切换候选时，先更新注册表并保留评分依据。
 
 ## 查询深度与 Agent 分工
 
-查询深度看需求派生出的查询词规模、证据要求和工作量。平台数量由用户指定的范围决定，不能单独用平台数量推断深度。
+查询深度主要看需要多少个独立子代理协作。平台数量、平台选择和查询表达均由需求语义决定，不能用关键词数量代替需求判断。
 
 ```mermaid
 flowchart TD
     A[需求模型] --> B{查询条件}
-    B -->|2-4 组查询词<br/>快速确认| L[light]
-    B -->|5-10 组查询词<br/>需要比较详情| M[medium]
-    B -->|11 组以上<br/>或要求源码/全文证据| D[deep]
-    L --> L1[一个 Agent]
-    L1 --> L2[一个综合 Skill]
-    M --> M1[每个平台一个 Agent]
-    M1 --> M2[按匹配度和评分顺序执行]
-    D --> D1[多个平台 Agent 并行]
-    D1 --> D2[每个平台内多个 Skill 顺序执行]
-    L2 --> E[汇总证据]
+    B -->|0 个子代理<br/>主对话直接查询| L[light]
+    B -->|默认 2 个<br/>最多 4 个| M[medium]
+    B -->|按任务需要<br/>不设固定上限| D[deep]
+    L --> L1[主对话执行适配器查询]
+    M --> M1[有限并发职责]
+    M1 --> M2[平台查询 / 读帖 / 证据复核]
+    D --> D1[按平台或证据职责扩展]
+    D1 --> D2[多个职责并行执行]
+    L1 --> E[主对话汇总证据]
     M2 --> E
     D2 --> E
 ```
 
 | 深度 | 默认分配 | Skill 处理方式 | 典型产出 |
 | --- | --- | --- | --- |
-| `light` | 一个 Agent | 使用一个综合多平台 Skill；只在有明确能力缺口时补充专项 Skill。 | 候选列表、简短判断、少量来源。 |
-| `medium` | 一个请求平台一个 Agent | 依据需求匹配度、证据完整度、兼容性和历史评分选择主 Skill；有明确缺口时再顺序补充专项 Skill。 | 平台级比较、详情证据和初步结论。 |
-| `deep` | 多个平台 Agent 并行 | 一个 Agent 负责一个平台；同一平台命中的多个 Skill 由它依次执行，最后统一整理。 | 交叉平台结果、源码或全文证据、失败说明。 |
+| `light` | 0 个子代理 | 主对话承担语义匹配、适配器查询和结果整理。 | 候选列表、简短判断、少量来源。 |
+| `medium` | 默认 2 个，最多 4 个 | 主对话分配有限数量的独立平台、补充或证据复核职责。 | 平台级比较、详情证据和初步结论。 |
+| `deep` | 按任务需要，不设固定上限 | 主对话按平台或证据职责扩展子代理并行执行，最后统一整理。 | 交叉平台结果、源码或全文证据、失败说明。 |
 
 ## 一次请求如何落地
 
@@ -178,15 +199,20 @@ flowchart TD
 sequenceDiagram
     participant U as 用户
     participant R as Router
-    participant A as 平台 Agent
+    participant A as 子代理
     participant S as 叶子 Skill
     participant E as 证据记录
     U->>R: 提出目标、范围和输出要求
     R->>R: 识别 open-source 场景
-    R->>R: 生成能力词、限制词、平台词和证据词
-    R->>R: 匹配候选并选择查询深度
-    R->>A: 按平台分配任务
-    A->>S: 按注册表顺序加载并执行
+    R->>R: 建立目标、约束、证据和终点模型
+    R->>R: 语义匹配平台与 Skill，再选择子代理数量
+    alt light
+        R->>S: 主对话加载并执行匹配的叶子 Skill
+    else medium / deep
+        R->>A: 按平台或证据职责分配子代理
+        A->>S: 按注册表顺序加载并执行
+    end
+    S->>S: 生成适配器查询表达
     S-->>A: 返回候选、链接和平台证据
     A-->>R: 返回平台结果与执行状态
     R->>E: 记录最终叶子 Skill、证据和失败归因
@@ -212,7 +238,7 @@ records/routes/YYYY-MM-DD/<timestamp>-<route-id>.json
 
 - 查询摘要和必要上下文
 - 场景、交互模式和深度
-- 需求驱动的查询词
+- 需求驱动的查询表达
 - 命中的平台与 Skill
 - 每个平台的 Agent 和 Skill 执行顺序
 - 最终叶子 Skill 路径
@@ -224,7 +250,7 @@ records/routes/YYYY-MM-DD/<timestamp>-<route-id>.json
 records/feedback/YYYY-MM-DD/<timestamp>-<route-id>-feedback.json
 ```
 
-Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时，才生成 `tuning/proposals/` 中的调优建议；单次评分只作为样本。
+评分只绑定 `route_id`、`target_skill_id` 和 `score`。`target_skill_id` 是本次结果的最小最终 Skill；只有相似任务重复出现同一问题时，才生成 `tuning/proposals/` 中的调优建议。
 
 ### 记录示例
 
@@ -261,7 +287,7 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
 
 ### 评分维度
 
-每个 Router 或子 Skill 按 0–10 分记录以下维度，汇总分只用于排序和调优，不代表第三方项目一定运行成功：
+每个最终叶子 Skill 按 0–10 分记录以下维度，汇总分只用于排序和调优，不代表第三方项目一定运行成功：
 
 | 维度 | 权重 | 关注点 |
 | --- | ---: | --- |

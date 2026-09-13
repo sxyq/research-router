@@ -5,7 +5,7 @@
 | 代码 | 归因 | 判断 |
 | --- | --- | --- |
 | `intent-mismatch` | 场景识别失败 | 把修 Bug、开源发现或论文任务判错 |
-| `depth-mismatch` | 深度选择失败 | 查询词或证据级别明显不足/过量 |
+| `depth-mismatch` | 深度选择失败 | 子代理数量、职责拆分或证据复核范围明显不足/过量 |
 | `skill-ranking` | Skill 排序失败 | 有更匹配候选却选择了较弱候选 |
 | `platform-route` | 平台路由失败 | 平台别名、平台能力或专项边界判断错误 |
 | `skill-execution` | 子 Skill 执行失败 | 命令、依赖、登录态或实现本身失败 |

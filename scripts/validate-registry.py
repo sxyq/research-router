@@ -26,6 +26,14 @@ def main() -> int:
 
     platform_ids = set(platforms_index.get("platforms", []))
     skill_ids = {item.get("id") for item in skills_index if isinstance(item, dict)}
+    depth_policy = platforms_index.get("depth_policy")
+    expected_depth_policy = {
+        "light": {"sub_agents": 0, "execution": "main-conversation"},
+        "medium": {"sub_agents": {"default": 2, "max": 4}, "execution": "bounded-parallel"},
+        "deep": {"sub_agents": "unbounded", "execution": "task-sized-parallel"},
+    }
+    if depth_policy != expected_depth_policy:
+        errors.append("platforms.index.json: depth_policy must define light=0, medium=2..4, deep=unbounded")
     if not isinstance(aliases, dict):
         errors.append("aliases must be an object")
     else:
