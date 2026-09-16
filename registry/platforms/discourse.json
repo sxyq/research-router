@@ -2,6 +2,13 @@
   "platform_id": "discourse",
   "display_name": "Discourse 技术论坛协议",
   "aliases": ["discourse", "Discourse", "技术论坛", "小众论坛"],
+  "tier": 2,
+  "route_skills": ["forum-search"],
+  "scripts": ["scripts/discourse_search.py"],
+  "adapter_type": "local-protocol-adapter",
+  "access_mode": "public-json",
+  "status": "router-registered-local",
+  "script_note": "The bundled adapter reads public Discourse JSON endpoints; each forum remains an independent source.",
   "capabilities": ["adapter query execution", "category and tag filtering", "topic detail", "replies", "date filtering"],
   "depth_routes": {
     "light": ["forum-search"],

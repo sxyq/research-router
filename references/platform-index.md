@@ -22,6 +22,7 @@ The tier describes research priority and evidence strength. It does not prove th
 | 2 | Stack Overflow (`stackoverflow`) | `autocli`, `anysearch`; `github-analyze` only for a repository-linked bug | External Skills/CLI; no local Router script | Public questions, answers, and code patterns. |
 | 2 | Linux.do (`linux-do`) | `autocli` | External CLI; no local Router script | Public or browser-backed community content; login state can affect access. |
 | 2 | V2EX (`v2ex`) | `autocli`; deep may add `last30days-cn` | External CLI; no local Router script | Topics, nodes, replies, and recent community discussion. |
+| 2 | Discourse 技术论坛 (`discourse`) | `forum-search` | `scripts/discourse_search.py` | Local read-only JSON adapter. Requires a public Discourse endpoint and a selected forum base URL. |
 | 3 | Bilibili (`bilibili`) | `autocli`; deep may add `last30days-cn` | External CLI; no local Router script | Search, hot lists, metadata, and subtitles when available. |
 | 3 | 中国抖音 (`douyin`) | `douyin-skills`; deep may add `last30days-cn` | External Skill; no local Router script | Public video and topic discovery. Explicit user request required for light routing. |
 | 3 | TikTok (`tiktok`) | `autocli` | External CLI; no local Router script | Public video, profile, and engagement metadata. |

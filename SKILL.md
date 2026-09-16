@@ -43,12 +43,13 @@ Use this table to map a platform to its entry Skill and script or adapter. `exte
 | 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `external` Skills/CLI; no local script |
 | 2 | Linux.do | `autocli` | `external` CLI; no local script |
 | 2 | V2EX | `autocli`; deep may add `last30days-cn` | `external` CLI; no local script |
+| 2 | Discourse technical forums | `forum-search` | `scripts/discourse_search.py` |
 | 3 | Bilibili | `autocli`; deep may add `last30days-cn` | `external` CLI; no local script |
 | 3 | 中国抖音 | `douyin-skills`; deep may add `last30days-cn` | `external` Skill; no local script |
 | 3 | TikTok | `autocli` | `external` CLI; no local script |
 | 3 | 小红书 | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | `external` Skills/CLI; no local script |
 
-The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, YouTube, 微博, 豆瓣, 微信读书, 雪球, BOSS 直聘, Twitter/X, and desktop-app entries declared by AutoCLI. They remain catalog-only until their external runtime is available.
+The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, YouTube, 微博, 豆瓣, 微信读书, 雪球, BOSS 直聘, Twitter/X, and desktop-app entries declared by AutoCLI. They remain catalog-only until their external runtime is available. Discourse is a registered local protocol route; the selected forum base URL must still be supplied and verified.
 
 ## Route lifecycle and platform dispatch
 

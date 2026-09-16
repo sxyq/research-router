@@ -10,7 +10,8 @@
     "github",
     "academic",
     "stackoverflow",
-    "52pojie"
+    "52pojie",
+    "discourse"
   ],
   "scenes": [
     "bug-fix",
@@ -25,7 +26,7 @@
   ],
   "platform_tiers": {
     "tier-1": ["github", "academic"],
-    "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],
+    "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "discourse", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],
     "tier-3": ["bilibili", "douyin", "tiktok", "xiaohongshu", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"]
   },
   "catalog_only_platforms": [

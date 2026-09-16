@@ -146,11 +146,14 @@ research-router/
 | 3 | 小红书 | `autocli` | `autocli` + `xiaohongshu-skills` | 三者按序执行 |
 | 2 | Linux.do | `autocli` | `autocli` | `autocli` |
 | 2 | V2EX | `autocli` | `autocli` | `autocli` + `last30days-cn` |
+| 2 | Discourse 技术论坛 | `forum-search` | `forum-search` | `forum-search` |
 | 1 | GitHub | `github-search` | `github-search` → `github-analyze` | 上述两项 + `last30days-cn` |
 | 2 | 吾爱破解 / 52pojie.cn | `52pojie-research` | `52pojie-research`：列表/RSS → 选定帖子 | `52pojie-research`：热门、分页帖子与回帖 |
 | 1 | 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
 
 `qiaomu-smart-search` 与 AutoCLI/OpenCLI 属于重叠入口，当前不放入默认活动路由。需要切换候选时，先更新注册表并保留评分依据。
+
+小众技术论坛使用 `forum-search` 读取公开 Discourse JSON。当前目录中的 Rust Users、Kubernetes Discuss、Docker Community、NixOS Discourse 和 Home Assistant Community 已有公开端点记录；Lobsters、Hacker News、NodeSeek、HostLoc 等非 Discourse 站点不套用此适配器。详细范围见 [references/small-forums.md](references/small-forums.md)。
 
 ## 路线生命周期与平台 Agent 分发
 

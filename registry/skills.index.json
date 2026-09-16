@@ -107,6 +107,19 @@
       "adapter_type": "local-skill-and-script",
       "scripts": ["references/local/52pojie-research/scripts/fetch.py"],
       "status": "local-created"
+    },
+    {
+      "id": "forum-search",
+      "display_name": "Discourse Forum Search",
+      "role": "public Discourse community search and topic reading",
+      "kind": "local-protocol-adapter",
+      "source": "local:scripts/discourse_search.py",
+      "load": "on-demand",
+      "platforms": ["discourse"],
+      "adapter_type": "local-script",
+      "scripts": ["scripts/discourse_search.py"],
+      "limits": ["Requires a public Discourse JSON endpoint", "Does not cover custom forum APIs"],
+      "status": "local-included"
     }
   ]
 }
