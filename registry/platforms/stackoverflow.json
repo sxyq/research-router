@@ -1,0 +1,19 @@
+{
+  "platform_id": "stackoverflow",
+  "display_name": "Stack Overflow",
+  "aliases": ["stackoverflow", "stack overflow"],
+  "tier": 2,
+  "route_skills": ["autocli", "anysearch", "github-analyze"],
+  "scripts": [],
+  "adapter_type": "external-skill-chain",
+  "access_mode": "public-read",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by the selected discovery Skill; GitHub Analyze is supplemental for repository-linked bugs.",
+  "capabilities": ["error messages", "API usage", "code patterns", "accepted answers"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli", "github-analyze"],
+    "deep": ["autocli", "github-analyze", "anysearch"]
+  },
+  "notes": "For a repository-specific bug, use GitHub issues, commits, source, and tests as the primary evidence path."
+}

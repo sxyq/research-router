@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Router Platform Entry",
+  "type": "object",
+  "required": ["platform_id", "display_name", "tier", "route_skills", "scripts", "adapter_type", "access_mode", "status", "capabilities", "depth_routes"],
+  "properties": {
+    "platform_id": {"type": "string"},
+    "display_name": {"type": "string"},
+    "aliases": {"type": "array", "items": {"type": "string"}},
+    "scenes": {"type": "array", "items": {"type": "string"}},
+    "tier": {"type": "integer", "minimum": 1, "maximum": 3},
+    "route_skills": {"type": "array", "items": {"type": "string"}},
+    "scripts": {"type": "array", "items": {"type": "string"}},
+    "adapter_type": {"type": "string"},
+    "access_mode": {"type": "string"},
+    "status": {"type": "string"},
+    "script_note": {"type": "string"},
+    "capabilities": {"type": "array", "items": {"type": "string"}},
+    "depth_routes": {
+      "type": "object",
+      "required": ["light", "medium", "deep"],
+      "properties": {
+        "light": {"type": "array", "items": {"type": "string"}},
+        "medium": {"type": "array", "items": {"type": "string"}},
+        "deep": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

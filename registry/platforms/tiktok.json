@@ -1,0 +1,19 @@
+{
+  "platform_id": "tiktok",
+  "display_name": "TikTok",
+  "aliases": ["tiktok"],
+  "tier": 3,
+  "route_skills": ["autocli"],
+  "scripts": [],
+  "adapter_type": "external-cli",
+  "access_mode": "browser-session",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by AutoCLI; this repository has no TikTok retrieval script.",
+  "capabilities": ["video search", "explore", "profile", "public engagement metadata"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "TikTok is tracked separately from Chinese Douyin; do not infer one platform's availability from the other."
+}

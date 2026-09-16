@@ -1,0 +1,19 @@
+{
+  "platform_id": "v2ex",
+  "display_name": "V2EX",
+  "aliases": ["v2ex"],
+  "tier": 2,
+  "route_skills": ["autocli", "last30days-cn"],
+  "scripts": [],
+  "adapter_type": "external-cli",
+  "access_mode": "public-or-browser",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by AutoCLI; this repository has no V2EX retrieval script.",
+  "capabilities": ["hot", "latest", "node", "topic detail", "replies"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli", "last30days-cn"]
+  },
+  "notes": "Use last30days-cn for time-bounded community heat, not as the default light entry."
+}

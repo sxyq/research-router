@@ -1,0 +1,10 @@
+{
+  "id": "github-search",
+  "display_name": "GitHub Search",
+  "role": "repository discovery by use case, topic, or trend",
+  "kind": "platform-specialist",
+  "source": "https://github.com/hsergiu/github-huggingface-search-skills",
+  "load": "on-demand",
+  "platforms": ["github"],
+  "status": "candidate-verified-source"
+}

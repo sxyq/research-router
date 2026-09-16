@@ -1,0 +1,19 @@
+{
+  "platform_id": "douyin",
+  "display_name": "中国抖音",
+  "aliases": ["抖音", "中国抖音", "douyin"],
+  "tier": 3,
+  "route_skills": ["douyin-skills", "last30days-cn"],
+  "scripts": [],
+  "adapter_type": "external-skill",
+  "access_mode": "browser-session",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by Douyin Skills; this repository has no Douyin retrieval script.",
+  "capabilities": ["public video search", "trending topics", "public detail"],
+  "depth_routes": {
+    "light": [],
+    "medium": ["douyin-skills"],
+    "deep": ["douyin-skills", "last30days-cn"]
+  },
+  "notes": "Do not infer Chinese Douyin coverage from a TikTok adapter. Light mode skips this platform unless the user explicitly requests it."
+}

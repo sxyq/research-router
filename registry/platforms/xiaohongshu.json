@@ -1,0 +1,19 @@
+{
+  "platform_id": "xiaohongshu",
+  "display_name": "小红书",
+  "aliases": ["小红书", "xhs", "xiaohongshu"],
+  "tier": 3,
+  "route_skills": ["autocli", "xiaohongshu-skills", "last30days-cn"],
+  "scripts": [],
+  "adapter_type": "external-skill-chain",
+  "access_mode": "browser-session",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by AutoCLI or XiaohongshuSkills; this repository has no Xiaohongshu retrieval script.",
+  "capabilities": ["note search", "feed", "detail", "comments", "interaction", "content data"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli", "xiaohongshu-skills"],
+    "deep": ["autocli", "xiaohongshu-skills", "last30days-cn"]
+  },
+  "notes": "Use the specialist when detail, comments, interactions, or content data are required."
+}

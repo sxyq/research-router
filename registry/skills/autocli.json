@@ -1,0 +1,15 @@
+{
+  "id": "autocli",
+  "display_name": "AutoCLI Skill",
+  "role": "multi-platform discovery and content reading",
+  "kind": "general-multi-platform",
+  "source": "https://github.com/nashsu/autocli-skill",
+  "upstream": "https://github.com/nashsu/AutoCLI",
+  "load": "on-demand",
+  "platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
+  "router_platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow"],
+  "catalog_only_platforms": ["hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
+  "limits": ["GitHub is CLI passthrough rather than source analysis", "TikTok is not the same as Chinese Douyin", "Catalog-only platforms require the external AutoCLI runtime"],
+  "coverage_note": "The upstream README lists Arxiv; this Router normalizes it to the registered academic platform. Unnamed upstream sites remain outside the registry.",
+  "status": "candidate-verified-source"
+}

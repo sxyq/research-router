@@ -1,0 +1,10 @@
+{
+  "id": "last30days-cn",
+  "display_name": "Last30Days CN",
+  "role": "recent Chinese-community heat and multi-platform discussion",
+  "kind": "general-research-specialist",
+  "source": "https://github.com/hwwn/last30days-skill-cn",
+  "load": "on-demand",
+  "platforms": ["bilibili", "douyin", "xiaohongshu", "v2ex", "github"],
+  "status": "deep-or-recency-only"
+}

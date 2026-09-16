@@ -1,0 +1,19 @@
+{
+  "platform_id": "linux-do",
+  "display_name": "Linux.do",
+  "aliases": ["linux.do", "linux do"],
+  "tier": 2,
+  "route_skills": ["autocli"],
+  "scripts": [],
+  "adapter_type": "external-cli",
+  "access_mode": "public-or-browser",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by AutoCLI; this repository has no Linux.do retrieval script.",
+  "capabilities": ["topic search", "hot", "latest", "category", "topic detail"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "Use live help and login-state checks before relying on a browser-backed command."
+}

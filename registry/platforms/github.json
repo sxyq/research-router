@@ -1,0 +1,20 @@
+{
+  "platform_id": "github",
+  "display_name": "GitHub",
+  "aliases": ["github", "git hub"],
+  "tier": 1,
+  "route_skills": ["github-search", "github-analyze", "last30days-cn"],
+  "scripts": [],
+  "adapter_type": "external-skill-chain",
+  "access_mode": "public-repository",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by the GitHub Skills; this repository has no GitHub retrieval script.",
+  "capabilities": ["repository discovery", "README reading", "tree inspection", "source analysis", "dependencies", "tests", "Issues", "Releases"],
+  "depth_routes": {
+    "light": ["github-search"],
+    "medium": ["github-search", "github-analyze"],
+    "deep": ["github-search", "github-analyze", "last30days-cn"]
+  },
+  "source_requirement": "A source-level or implementation claim requires github-analyze; title and README alone are insufficient.",
+  "agent_rule": "One GitHub Agent runs matched Skills in the listed order."
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sxyq/research-router/schema/route-record.schema.json",
+  "title": "Research Router Route Record",
+  "type": "object",
+  "required": ["route_id", "created_at", "scene", "interaction_mode", "depth", "query_variants", "platforms", "router_path", "executed_leaf_skills", "final_leaf_skills", "source_coverage", "stop_reason", "status"],
+  "properties": {
+    "route_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "request_summary": {"type": "string"},
+    "context_summary": {"type": "string"},
+    "scene": {"enum": ["bug-fix", "open-source", "academic", "community"]},
+    "interaction_mode": {"enum": ["direct", "clarify"]},
+    "depth": {"enum": ["light", "medium", "deep"]},
+    "query_variants": {"type": "array", "items": {"type": "string"}},
+    "platforms": {"type": "array", "items": {"$ref": "#/$defs/platform"}},
+    "router_path": {"type": "array", "items": {"$ref": "#/$defs/routeEvent"}},
+    "executed_leaf_skills": {"type": "array", "items": {"type": "string"}},
+    "matched_skills": {"type": "array", "items": {"$ref": "#/$defs/skill"}},
+    "final_leaf_skills": {"type": "array", "items": {"type": "string"}},
+    "source_coverage": {"$ref": "#/$defs/sourceCoverage"},
+    "stop_reason": {"type": "string", "minLength": 1},
+    "route_evaluation": {"$ref": "#/$defs/routeEvaluation"},
+    "experience_records": {"type": "array", "items": {"type": "string"}},
+    "failures": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/$defs/failure"}]}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "user_feedback": {"type": ["object", "null"]},
+    "status": {"enum": ["planned", "running", "completed", "partial", "failed"]}
+  },
+  "$defs": {
+    "platform": {
+      "type": "object",
+      "required": ["platform_id", "agent_id", "skill_order"],
+      "properties": {
+        "platform_id": {"type": "string"},
+        "agent_id": {"type": "string"},
+        "skill_order": {"type": "array", "items": {"type": "string"}},
+        "status": {"type": "string"}
+      }
+    },
+    "skill": {
+      "type": "object",
+      "required": ["skill_id", "reason"],
+      "properties": {
+        "skill_id": {"type": "string"},
+        "reason": {"type": "string"},
+        "score": {"type": "number", "minimum": 0, "maximum": 10}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "required": ["code", "summary"],
+      "properties": {
+        "code": {"type": "string"},
+        "summary": {"type": "string"},
+        "skill_id": {"type": "string"}
+      }
+    },
+    "routeEvent": {
+      "type": "object",
+      "required": ["stage"],
+      "properties": {
+        "stage": {"type": "string", "minLength": 1},
+        "value": {"type": "string"},
+        "platform_id": {"type": "string"},
+        "skill_ids": {"type": "array", "items": {"type": "string"}},
+        "status": {"type": "string"},
+        "reason": {"type": "string"}
+      }
+    },
+    "sourceCoverage": {
+      "type": "object",
+      "required": ["status", "requested", "covered", "missing"],
+      "properties": {
+        "status": {"enum": ["verified", "partial", "unavailable"]},
+        "requested": {"type": "array", "items": {"type": "string"}},
+        "covered": {"type": "array", "items": {"type": "string"}},
+        "missing": {"type": "array", "items": {"type": "string"}},
+        "source_count": {"type": "integer", "minimum": 0},
+        "direct_source_count": {"type": "integer", "minimum": 0},
+        "recency_score": {"type": ["number", "null"], "minimum": 0, "maximum": 10}
+      }
+    },
+    "routeEvaluation": {
+      "type": "object",
+      "required": ["problem_coverage", "evidence_directness", "recency", "deduplication", "execution_cost", "unconfirmed_items", "overall", "method"],
+      "properties": {
+        "problem_coverage": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+        "evidence_directness": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+        "recency": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+        "deduplication": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+        "execution_cost": {"$ref": "#/$defs/executionCost"},
+        "unconfirmed_items": {"type": "array", "items": {"type": "string"}},
+        "overall": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+        "method": {"enum": ["manual", "heuristic", "combined"]}
+      }
+    },
+    "executionCost": {
+      "type": "object",
+      "required": ["query_count", "skill_calls", "agent_count"],
+      "properties": {
+        "query_count": {"type": "integer", "minimum": 0},
+        "skill_calls": {"type": "integer", "minimum": 0},
+        "agent_count": {"type": "integer", "minimum": 0},
+        "duration_seconds": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["url", "status"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "status": {"enum": ["verified", "partial", "unavailable", "contradicted"]},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "literature-evidence-audit",
+  "display_name": "Literature Evidence Audit",
+  "role": "primary-paper PDF evidence verification",
+  "kind": "academic-evidence",
+  "source": "local:${CODEX_HOME}/skills/literature-evidence-audit/SKILL.md",
+  "load": "on-demand",
+  "platforms": ["academic"],
+  "status": "local-installed"
+}

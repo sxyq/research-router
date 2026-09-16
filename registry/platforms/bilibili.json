@@ -1,0 +1,19 @@
+{
+  "platform_id": "bilibili",
+  "display_name": "B站",
+  "aliases": ["b站", "哔哩哔哩", "bilibili"],
+  "tier": 3,
+  "route_skills": ["autocli", "last30days-cn"],
+  "scripts": [],
+  "adapter_type": "external-cli",
+  "access_mode": "browser-session",
+  "status": "router-registered",
+  "script_note": "Execution is supplied by AutoCLI; this repository has no Bilibili retrieval script.",
+  "capabilities": ["search", "hot", "video metadata", "subtitle when available"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli", "last30days-cn"]
+  },
+  "notes": "Recent-30-day discussion or heat requests may add last30days-cn."
+}

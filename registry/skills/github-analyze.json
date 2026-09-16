@@ -1,0 +1,10 @@
+{
+  "id": "github-analyze",
+  "display_name": "GitHub Analyze",
+  "role": "repository tree, source, dependency, test, Issue, and Release analysis",
+  "kind": "platform-specialist",
+  "source": "https://github.com/hsergiu/github-huggingface-search-skills",
+  "load": "on-demand",
+  "platforms": ["github"],
+  "status": "candidate-verified-source"
+}

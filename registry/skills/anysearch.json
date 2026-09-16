@@ -1,0 +1,10 @@
+{
+  "id": "anysearch",
+  "display_name": "AnySearch",
+  "role": "general, vertical, batch, and full-page search",
+  "kind": "general-web-search",
+  "source": "https://github.com/anysearch-ai/anysearch-skill",
+  "load": "on-demand",
+  "platforms": ["academic", "stackoverflow"],
+  "status": "candidate-verified-source"
+}

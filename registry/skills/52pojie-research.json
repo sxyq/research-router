@@ -1,0 +1,12 @@
+{
+  "id": "52pojie-research",
+  "display_name": "52pojie Research",
+  "role": "public forum listing, RSS, thread reading, and local keyword filtering",
+  "kind": "platform-specialist",
+  "source": "local:../references/local/52pojie-research/SKILL.md",
+  "load": "on-demand",
+  "platforms": ["52pojie"],
+  "adapter_type": "local-skill-and-script",
+  "scripts": ["references/local/52pojie-research/scripts/fetch.py"],
+  "status": "local-created"
+}

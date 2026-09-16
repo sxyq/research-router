@@ -1,0 +1,27 @@
+[
+  {
+    "name": "light-open-source-multi-platform",
+    "scene": "open-source",
+    "depth": "light",
+    "expected": ["autocli"]
+  },
+  {
+    "name": "medium-github-source-review",
+    "scene": "open-source",
+    "depth": "medium",
+    "expected": ["github-search", "github-analyze"]
+  },
+  {
+    "name": "deep-paper-evidence",
+    "scene": "academic",
+    "depth": "deep",
+    "expected": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+  },
+  {
+    "name": "medium-52pojie-community",
+    "scene": "community",
+    "depth": "medium",
+    "platform": "52pojie",
+    "expected": ["52pojie-research"]
+  }
+]

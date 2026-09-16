@@ -1,0 +1,341 @@
+{
+  "version": 2,
+  "platforms": [
+    "bilibili",
+    "douyin",
+    "tiktok",
+    "xiaohongshu",
+    "linux-do",
+    "v2ex",
+    "github",
+    "academic",
+    "stackoverflow",
+    "52pojie"
+  ],
+  "scenes": [
+    "bug-fix",
+    "open-source",
+    "academic",
+    "community"
+  ],
+  "general_skills": [
+    "autocli",
+    "anysearch",
+    "last30days-cn"
+  ],
+  "platform_tiers": {
+    "tier-1": ["github", "academic"],
+    "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],
+    "tier-3": ["bilibili", "douyin", "tiktok", "xiaohongshu", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"]
+  },
+  "catalog_only_platforms": [
+    {
+      "platform_id": "hacker-news",
+      "display_name": "Hacker News",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "dev-to",
+      "display_name": "Dev.to",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "lobsters",
+      "display_name": "Lobsters",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "reddit",
+      "display_name": "Reddit",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "zhihu",
+      "display_name": "知乎",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "wikipedia",
+      "display_name": "Wikipedia",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "bbc",
+      "display_name": "BBC",
+      "tier": 2,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "twitter-x",
+      "display_name": "Twitter / X",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "youtube",
+      "display_name": "YouTube",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "weibo",
+      "display_name": "微博",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "douban",
+      "display_name": "豆瓣",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "weread",
+      "display_name": "微信读书",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "xueqiu",
+      "display_name": "雪球",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "boss-zhipin",
+      "display_name": "BOSS 直聘",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "facebook",
+      "display_name": "Facebook",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "instagram",
+      "display_name": "Instagram",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "jike",
+      "display_name": "即刻",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "google",
+      "display_name": "Google",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public-or-browser",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command; browser access can be required for some commands."
+    },
+    {
+      "platform_id": "bloomberg",
+      "display_name": "Bloomberg",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "public-or-browser",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command after verifying it is installed."
+    },
+    {
+      "platform_id": "medium",
+      "display_name": "Medium",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "substack",
+      "display_name": "Substack",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "linkedin",
+      "display_name": "LinkedIn",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "yahoo-finance",
+      "display_name": "Yahoo Finance",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-cli",
+      "access_mode": "browser-session",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli command with the required browser session."
+    },
+    {
+      "platform_id": "cursor",
+      "display_name": "Cursor",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-desktop-cli",
+      "access_mode": "desktop-app",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli desktop command after verifying the application is running."
+    },
+    {
+      "platform_id": "notion",
+      "display_name": "Notion",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-desktop-cli",
+      "access_mode": "desktop-app",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli desktop command after verifying the application is running."
+    },
+    {
+      "platform_id": "chatgpt",
+      "display_name": "ChatGPT",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-desktop-cli",
+      "access_mode": "desktop-app",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli desktop command after verifying the application is running."
+    },
+    {
+      "platform_id": "discord",
+      "display_name": "Discord",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-desktop-cli",
+      "access_mode": "desktop-app",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli desktop command after verifying the application is running."
+    },
+    {
+      "platform_id": "codex",
+      "display_name": "Codex",
+      "tier": 3,
+      "route_skills": ["autocli"],
+      "scripts": [],
+      "adapter_type": "external-desktop-cli",
+      "access_mode": "desktop-app",
+      "status": "upstream-catalog-only",
+      "script_note": "Use the external autocli desktop command after verifying the application is running."
+    }
+  ]
+}

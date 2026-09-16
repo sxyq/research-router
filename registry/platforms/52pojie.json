@@ -1,0 +1,23 @@
+{
+  "platform_id": "52pojie",
+  "display_name": "吾爱破解 / 52pojie.cn",
+  "aliases": ["吾爱破解", "吾爱社区", "52pojie", "52破解"],
+  "scenes": ["community", "bug-fix"],
+  "tier": 2,
+  "route_skills": ["52pojie-research"],
+  "scripts": ["references/local/52pojie-research/scripts/fetch.py"],
+  "adapter_type": "local-skill-and-script",
+  "access_mode": "public-read",
+  "status": "router-registered-local",
+  "script_note": "The bundled script reads public HTML, RSS, hot-guide, and selected thread pages.",
+  "capabilities": ["public forum listing", "RSS", "hot guide", "thread detail", "multi-page replies", "local keyword filtering", "reverse-engineering and software discussions"],
+  "depth_routes": {
+    "light": ["52pojie-research"],
+    "medium": ["52pojie-research"],
+    "deep": ["52pojie-research"]
+  },
+  "source_requirement": "A title, RSS description, or hot-guide row is discovery evidence; implementation or procedure claims require reading the public thread page.",
+  "agent_rule": "One forum Agent uses RSS or listing pages for discovery, then reads selected public thread pages sequentially.",
+  "access_scope": "Public HTML, public RSS, and public thread pages only; no login, internal search, posting, redirects, member pages, or attachment downloads.",
+  "notes": "The bundled child Skill uses local filtering because the site's robots.txt disallows search.php. Search results are bounded by the requested forum pages and RSS coverage."
+}

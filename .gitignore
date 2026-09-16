@@ -1,0 +1,7 @@
+.DS_Store
+
+# Route, feedback, summary, and experience data stay local to the Skill runtime.
+records/routes/**/*.json
+records/feedback/*.json
+records/summaries/*.json
+records/experience/**/*.jsonl

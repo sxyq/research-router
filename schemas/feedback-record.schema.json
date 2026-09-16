@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sxyq/research-router/schema/feedback-record.schema.json",
+  "title": "Research Router Feedback Record",
+  "type": "object",
+  "required": ["feedback_id", "route_id", "created_at", "scores"],
+  "properties": {
+    "feedback_id": {"type": "string", "minLength": 1},
+    "route_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "scores": {
+      "type": "object",
+      "required": ["router", "skills"],
+      "properties": {
+        "router": {"type": "number", "minimum": 0, "maximum": 10},
+        "skills": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 10}}
+      }
+    },
+    "comment": {"type": "string"},
+    "route_change_suggestion": {"type": "string"}
+  }
+}
