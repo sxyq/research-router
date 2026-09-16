@@ -1,0 +1,24 @@
+{
+  "platform_id": "discourse",
+  "display_name": "Discourse 技术论坛协议",
+  "aliases": ["discourse", "Discourse", "技术论坛", "小众论坛"],
+  "capabilities": ["adapter query execution", "category and tag filtering", "topic detail", "replies", "date filtering"],
+  "depth_routes": {
+    "light": ["forum-search"],
+    "medium": ["forum-search"],
+    "deep": ["forum-search"]
+  },
+  "examples": [
+    "https://users.rust-lang.org",
+    "https://discuss.kubernetes.io",
+    "https://forums.docker.com",
+    "https://discourse.nixos.org",
+    "https://community.home-assistant.io"
+  ],
+  "depth_policy": {
+    "light": {"sub_agents": 0, "adapter_queries": "按需求生成", "topic_reads": "0-1", "cross_site": false},
+    "medium": {"sub_agents": {"default": 2, "max": 4}, "adapter_queries": "按需求生成", "topic_reads": "up to 3 per site", "cross_site": true},
+    "deep": {"sub_agents": "unbounded", "adapter_queries": "按需求生成", "topic_reads": "relevant topics and replies", "cross_site": true}
+  },
+  "notes": "This is a protocol route, not one single community. The Router performs semantic platform matching; pass the selected forum base URL and adapter query expression to the read-only adapter."
+}
