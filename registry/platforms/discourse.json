@@ -5,6 +5,7 @@
   "tier": 2,
   "route_skills": ["forum-search"],
   "scripts": ["scripts/discourse_search.py"],
+  "search_components": ["discourse-json", "trafilatura"],
   "adapter_type": "local-protocol-adapter",
   "access_mode": "public-json",
   "status": "router-registered-local",

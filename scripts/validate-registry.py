@@ -15,6 +15,7 @@ PLATFORM_FIELDS = (
     "tier",
     "route_skills",
     "scripts",
+    "search_components",
     "adapter_type",
     "access_mode",
     "status",
@@ -51,6 +52,8 @@ def main() -> int:
         aliases = read_json(registry / "aliases.json")["aliases"]
         platforms_index = read_json(registry / "platforms.index.json")
         skills_index = read_json(registry / "skills.index.json")["skills"]
+        search_components_index = read_json(registry / "search-components.index.json")
+        small_forums_index = read_json(registry / "small-forums.index.json")
     except (OSError, UnicodeError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(f"ERROR: cannot read registry: {exc}", file=sys.stderr)
         return 1
@@ -88,6 +91,31 @@ def main() -> int:
             errors.append(f"{label}: scripts must be a list")
 
     all_platform_ids = active_platform_ids | catalog_ids
+    small_forum_ids = {
+        item.get("id")
+        for item in small_forums_index.get("entries", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    component_entries = search_components_index.get("components", [])
+    component_ids = {
+        item.get("id")
+        for item in component_entries
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    component_platform_ids = all_platform_ids | small_forum_ids
+    for component in component_entries:
+        if not isinstance(component, dict):
+            errors.append("search-components.index.json: every component must be an object")
+            continue
+        label = f"search component {component.get('id', '<unknown>')}"
+        for field in ("id", "display_name", "kind", "source", "requires_api_key", "status", "platforms", "providers", "output", "limits"):
+            if field not in component:
+                errors.append(f"{label}: missing {field}")
+        if component.get("requires_api_key") is not False:
+            errors.append(f"{label}: requires_api_key must be false")
+        for platform_id in component.get("platforms", []):
+            if platform_id not in component_platform_ids:
+                errors.append(f"{label}: unknown platform {platform_id!r}")
     scene_ids = set(platforms_index.get("scenes", []))
     skill_ids = {
         item.get("id")
@@ -201,6 +229,14 @@ def main() -> int:
                         errors.append(f"{path.name}: scripts must contain relative paths")
                     elif not (root / script).is_file():
                         errors.append(f"{path.name}: local script does not exist: {script}")
+
+            search_components = data.get("search_components")
+            if not isinstance(search_components, list):
+                errors.append(f"{path.name}: search_components must be a list")
+            else:
+                for component_id in search_components:
+                    if component_id not in component_ids:
+                        errors.append(f"{path.name}: unknown search component {component_id!r}")
 
             if platform_id == "52pojie":
                 expected_script = "references/local/52pojie-research/scripts/fetch.py"

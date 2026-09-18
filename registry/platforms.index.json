@@ -24,6 +24,13 @@
     "anysearch",
     "last30days-cn"
   ],
+  "search_components_index": "registry/search-components.index.json",
+  "search_policy": {
+    "default_auth": "none",
+    "default_output": "compact-json",
+    "default_evidence_level": "discovery",
+    "read_selected_sources_only": true
+  },
   "platform_tiers": {
     "tier-1": ["github", "academic"],
     "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "discourse", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],

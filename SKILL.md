@@ -20,9 +20,9 @@ Use this Skill as the independent entrypoint for internet research. It decides w
    - `direct`: do not ask requirement questions; use the conditions already supplied and start.
    - `clarify`: ask one focused question at a time, update the requirement model, and continue until the target, scope, evidence, and acceptance condition are clear.
 3. Convert the requirement into several meaning-preserving query variants. Query variants must come from the user's goal, capability, constraints, platform terms, and evidence requirement. Do not generate random synonyms or rely on one title keyword.
-4. Read `registry/platforms.index.json`, `registry/skills.index.json`, and the selected registered platform/Skill entries. Load only the selected external Skill's `SKILL.md` and its directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
+4. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Load only the selected external Skill's `SKILL.md` and its directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
    The platform quick index is below; read [the full platform index](references/platform-index.md) when the request names a catalog-only platform or needs the adapter limits. Catalog-only rows record upstream coverage and require a runtime availability check before selection.
-   For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes.
+   For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes. For public API discovery, use `scripts/fast_search.py` and return compact JSON before selecting pages for reading.
 5. Select `light`, `medium`, or `deep` from query count, evidence depth, and parallel work. Platform count comes from the requirement and does not determine depth.
 6. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
 7. Build a dispatch packet for every selected platform. The packet includes the platform tier, user goal, platform-specific query variants, evidence requirement, depth, Skill order, script or adapter path, and the stop condition.
@@ -33,23 +33,38 @@ Use this Skill as the independent entrypoint for internet research. It decides w
 
 ## Platform quick index
 
-Use this table to map a platform to its entry Skill and script or adapter. `external` means the route is supplied by an installed third-party Skill or CLI; it is not a local script in this repository.
+Use this table to map a platform to its entry Skill and script or adapter. `external` means the route is supplied by an installed third-party Skill or CLI. The local quick-search script only uses public endpoints and does not require an API key.
 
 | Tier | Platform | Entry Skill(s) | Script or adapter |
 | --- | --- | --- | --- |
-| 1 | GitHub | `github-search` -> `github-analyze` | `external` Skills; no local script |
-| 1 | Academic | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `external` or installed Skills; no local Router script |
+| 1 | GitHub | `github-search` -> `github-analyze` | `scripts/fast_search.py --provider github`; source analysis remains external |
+| 1 | Academic | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local |
 | 2 | 52pojie / 吾爱破解 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` |
-| 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `external` Skills/CLI; no local script |
-| 2 | Linux.do | `autocli` | `external` CLI; no local script |
-| 2 | V2EX | `autocli`; deep may add `last30days-cn` | `external` CLI; no local script |
+| 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub |
+| 2 | Linux.do | `autocli` | `external` CLI; use the Discourse adapter only after endpoint verification |
+| 2 | V2EX | `autocli`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` is optional discovery; no local V2EX adapter |
 | 2 | Discourse technical forums | `forum-search` | `scripts/discourse_search.py` |
-| 3 | Bilibili | `autocli`; deep may add `last30days-cn` | `external` CLI; no local script |
-| 3 | 中国抖音 | `douyin-skills`; deep may add `last30days-cn` | `external` Skill; no local script |
-| 3 | TikTok | `autocli` | `external` CLI; no local script |
-| 3 | 小红书 | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | `external` Skills/CLI; no local script |
+| 3 | Bilibili | `autocli`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 3 | 中国抖音 | `douyin-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 3 | TikTok | `autocli` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 3 | 小红书 | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
 
 The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, YouTube, 微博, 豆瓣, 微信读书, 雪球, BOSS 直聘, Twitter/X, and desktop-app entries declared by AutoCLI. They remain catalog-only until their external runtime is available. Discourse is a registered local protocol route; the selected forum base URL must still be supplied and verified.
+
+## No-key quick search components
+
+The component-to-platform mapping is maintained in `registry/search-components.index.json`. Use `scripts/fast_search.py` for compact public discovery without credentials:
+
+```bash
+python3 scripts/fast_search.py --provider github --query "skill router" --limit 5
+python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
+python3 scripts/fast_search.py --provider arxiv --query "agentic search" --limit 5
+python3 scripts/fast_search.py --provider discourse --base-url https://users.rust-lang.org --query "webview bridge" --limit 5
+```
+
+Supported public providers are GitHub, Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Discourse, RSS/Atom, and optional `ddgs`. Results contain titles, URLs, short excerpts, dates, source identifiers, and `evidence_level: discovery`; they do not contain raw pages. Read only selected URLs with a platform reader or an optional content extractor.
+
+`ddgs`, SearXNG, Semantic Scholar, and content-extraction packages are registered as optional no-key candidates. Their availability, rate limits, or package installation must be confirmed at runtime. Paid or credentialed services are outside this default path.
 
 ## Route lifecycle and platform dispatch
 
@@ -102,11 +117,14 @@ Read the relevant reference before applying details:
 - [deduplication.md](references/deduplication.md)
 - [scoring-policy.md](references/scoring-policy.md)
 - [failure-attribution.md](references/failure-attribution.md)
+- [search-components.md](references/search-components.md) when using the no-key public search adapters
 
 ## Boundaries
 
 - Registry entries describe known routes and catalog-only external Skills; they do not prove that a third-party Skill is installed or currently runnable.
+- Search components describe public access paths; they do not prove that a remote endpoint will remain available or that discovery snippets support a detailed claim.
 - Do not copy external Skills into this directory. Resolve an installed Skill by its canonical name/path, or report it unavailable and ask before installation.
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
+- The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
 - GitHub discovery can use `github-search`; a source-level request must continue to `github-analyze` and inspect README, tree, source, dependencies, tests, Issues, and Releases.
 - Academic discovery can use `autocli` or `anysearch`; a claim-to-paper check must continue to `literature-evidence-audit` and verify the primary paper body or PDF.

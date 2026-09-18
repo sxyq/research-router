@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Router Search Component Index",
+  "type": "object",
+  "required": ["version", "policy", "components"],
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "policy": {
+      "type": "object",
+      "required": ["default_auth", "default_output", "default_evidence_level"],
+      "properties": {
+        "default_auth": {"const": "none"},
+        "default_output": {"type": "string"},
+        "default_evidence_level": {"type": "string"},
+        "raw_pages": {"type": "string"}
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "display_name", "kind", "source", "requires_api_key", "status", "platforms", "providers", "output", "limits"],
+        "properties": {
+          "id": {"type": "string"},
+          "display_name": {"type": "string"},
+          "kind": {"type": "string"},
+          "source": {"type": "string"},
+          "requires_api_key": {"const": false},
+          "status": {"type": "string"},
+          "platforms": {"type": "array", "items": {"type": "string"}},
+          "providers": {"type": "array", "items": {"type": "string"}},
+          "output": {"type": "array", "items": {"type": "string"}},
+          "limits": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

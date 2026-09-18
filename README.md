@@ -117,6 +117,7 @@ research-router/
 ├── registry/                        # 内置平台和 Skill 注册表
 │   ├── aliases.json                 # 平台别名归一化
 │   ├── platforms.index.json         # 平台、场景和通用 Skill 索引
+│   ├── search-components.index.json # 平台与免 Key 搜索组件索引
 │   ├── skills.index.json            # Skill 总索引
 │   ├── platforms/*.json             # 平台能力和三档路由
 │   └── skills/*.json                # Skill 来源、能力和边界
@@ -129,7 +130,8 @@ research-router/
 │   ├── experience/                  # 每个 Skill 和平台的 JSONL 经验
 │   └── summaries/                   # 评分汇总
 ├── tuning/                          # 本地调优建议和已采用策略
-├── scripts/                         # 确定性校验、评估和经验记录脚本
+├── scripts/                         # 确定性搜索、校验、评估和经验记录脚本
+│   ├── fast_search.py               # 免 Key 公共 API 的紧凑 JSON 搜索
 │   └── update-experience.py         # 从路线记录生成 Skill/平台经验
 └── tests/                           # 固定路由案例，不访问真实平台
 ```
@@ -152,6 +154,34 @@ research-router/
 | 1 | 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
 
 `qiaomu-smart-search` 与 AutoCLI/OpenCLI 属于重叠入口，当前不放入默认活动路由。需要切换候选时，先更新注册表并保留评分依据。
+
+## 免 Key 快速搜索
+
+平台与搜索组件的完整对应关系见 [registry/search-components.index.json](registry/search-components.index.json) 和 [references/platform-index.md](references/platform-index.md)。本地脚本使用公开 HTTP 接口，不读取 API Key、Cookie 或登录态，并只返回紧凑的发现结果：
+
+```bash
+python3 scripts/fast_search.py --provider github --query "skill router" --limit 5
+python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
+python3 scripts/fast_search.py --provider openalex --query "agentic search" --limit 5
+python3 scripts/fast_search.py --provider arxiv --query "tool use token efficiency" --limit 5
+```
+
+当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Discourse、RSS/Atom 和可选 `ddgs`。结果的 `evidence_level` 默认是 `discovery`；只有选定 URL 被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
+
+建议的执行链是：
+
+```text
+平台专用 API
+  -> 紧凑 JSON
+  -> URL 去重
+  -> Top-K 选择
+  -> 选定页面正文读取
+  -> 证据状态与路线记录
+```
+
+`ddgs`、SearXNG、Semantic Scholar、`trafilatura` 和 `readability-lxml` 已登记为可选免 Key 组件。它们的安装状态、公共实例、限流和返回质量需要在运行时分别确认。
+
+详细调用方式见 [references/search-components.md](references/search-components.md)。
 
 小众技术论坛使用 `forum-search` 读取公开 Discourse JSON。当前目录中的 Rust Users、Kubernetes Discuss、Docker Community、NixOS Discourse 和 Home Assistant Community 已有公开端点记录；Lobsters、Hacker News、NodeSeek、HostLoc 等非 Discourse 站点不套用此适配器。详细范围见 [references/small-forums.md](references/small-forums.md)。
 
@@ -386,4 +416,4 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 
 ## 状态
 
-这是一个可运行的第一版 Skill 结构。第三方 Skill 的仓库存在和文档能力已经写入注册表；具体登录态、依赖和平台运行成功仍需在调用时单独验证。
+这是一个可运行的 Skill 结构。第三方 Skill 的仓库存在和文档能力已经写入注册表；免 Key 搜索组件的公开接口、依赖和平台运行成功仍需在调用时单独验证。

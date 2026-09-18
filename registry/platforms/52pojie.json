@@ -6,6 +6,7 @@
   "tier": 2,
   "route_skills": ["52pojie-research"],
   "scripts": ["references/local/52pojie-research/scripts/fetch.py"],
+  "search_components": ["52pojie-public", "rss-atom"],
   "adapter_type": "local-skill-and-script",
   "access_mode": "public-read",
   "status": "router-registered-local",

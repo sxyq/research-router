@@ -16,19 +16,43 @@ The tier describes research priority and evidence strength. It does not prove th
 
 | Tier | Platform (`platform_id`) | Entry Skills | Script or adapter | Status and access scope |
 | --- | --- | --- | --- | --- |
-| 1 | GitHub (`github`) | `github-search` -> `github-analyze`; deep may add `last30days-cn` | External Skills; no local Router script | Public repositories. Source-level claims require tree, source, dependencies, tests, Issues, and Releases. |
-| 1 | Academic (`academic`) | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | External or installed Skills; no local Router script | Paper discovery and primary PDF/body evidence. |
+| 1 | GitHub (`github`) | `github-search` -> `github-analyze`; deep may add `last30days-cn` | `scripts/fast_search.py --provider github`; source analysis remains external | Public repositories. Source-level claims require tree, source, dependencies, tests, Issues, and Releases. |
+| 1 | Academic (`academic`) | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local | Paper discovery and primary PDF/body evidence. |
 | 2 | 吾爱破解 (`52pojie`) | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` | Local public HTML/RSS/thread reader. No login, captcha, member pages, redirects, or attachments. |
-| 2 | Stack Overflow (`stackoverflow`) | `autocli`, `anysearch`; `github-analyze` only for a repository-linked bug | External Skills/CLI; no local Router script | Public questions, answers, and code patterns. |
-| 2 | Linux.do (`linux-do`) | `autocli` | External CLI; no local Router script | Public or browser-backed community content; login state can affect access. |
-| 2 | V2EX (`v2ex`) | `autocli`; deep may add `last30days-cn` | External CLI; no local Router script | Topics, nodes, replies, and recent community discussion. |
+| 2 | Stack Overflow (`stackoverflow`) | `autocli`, `anysearch`; `github-analyze` only for a repository-linked bug | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub | Public questions, answers, and code patterns. |
+| 2 | Linux.do (`linux-do`) | `autocli` | External CLI; Discourse adapter is a candidate after endpoint verification | Public or browser-backed community content; login state can affect access. |
+| 2 | V2EX (`v2ex`) | `autocli`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs`; no local V2EX adapter | Topics, nodes, replies, and recent community discussion. |
 | 2 | Discourse 技术论坛 (`discourse`) | `forum-search` | `scripts/discourse_search.py` | Local read-only JSON adapter. Requires a public Discourse endpoint and a selected forum base URL. |
-| 3 | Bilibili (`bilibili`) | `autocli`; deep may add `last30days-cn` | External CLI; no local Router script | Search, hot lists, metadata, and subtitles when available. |
-| 3 | 中国抖音 (`douyin`) | `douyin-skills`; deep may add `last30days-cn` | External Skill; no local Router script | Public video and topic discovery. Explicit user request required for light routing. |
-| 3 | TikTok (`tiktok`) | `autocli` | External CLI; no local Router script | Public video, profile, and engagement metadata. |
-| 3 | 小红书 (`xiaohongshu`) | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | External Skills/CLI; no local Router script | Notes, details, comments, and content data when available. |
+| 3 | Bilibili (`bilibili`) | `autocli`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Search, hot lists, metadata, and subtitles when available. |
+| 3 | 中国抖音 (`douyin`) | `douyin-skills`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Public video and topic discovery. Explicit user request required for light routing. |
+| 3 | TikTok (`tiktok`) | `autocli` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Public video, profile, and engagement metadata. |
+| 3 | 小红书 (`xiaohongshu`) | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Notes, details, comments, and content data when available. |
 
-The local 52pojie child Skill is the only registered platform route with a bundled retrieval script in this repository. Other rows point to external Skills or CLIs and must retain that limitation in the final result.
+The repository now has two kinds of local retrieval: platform readers (`52pojie-research` and `forum-search`) and the compact public API script (`scripts/fast_search.py`). Other rows still point to external Skills, browser sessions, or catalog-only adapters and must retain that limitation in the final result.
+
+## Search component mapping
+
+The complete component registry is [registry/search-components.index.json](../registry/search-components.index.json). Every component in the default path has `requires_api_key: false`; optional packages and public instances remain runtime candidates.
+
+| Component | Platform mapping | Local entry | Output and evidence |
+| --- | --- | --- | --- |
+| `fast-search` | GitHub, Stack Overflow, Academic, Discourse, Hacker News, Dev.to, Wikipedia | `scripts/fast_search.py` | Compact JSON; `discovery` evidence |
+| `ddgs` | Video, social, Google and catalog-only web platforms | Optional provider in `scripts/fast_search.py` | Title, URL, excerpt; discovery only |
+| `github-search-api` | GitHub | `fast_search.py --provider github` | Repository candidates; source reading follows |
+| `stackexchange-api` | Stack Overflow | `fast_search.py --provider stackoverflow` | Questions and answer metadata |
+| `hn-algolia` | Hacker News | `fast_search.py --provider hacker-news` | Stories and comments |
+| `devto-api` | Dev.to | `fast_search.py --provider dev-to` | Tag-oriented article discovery |
+| `wikipedia-api` | Wikipedia | `fast_search.py --provider wikipedia` | Page candidates and snippets |
+| `openalex-api` | Academic | `fast_search.py --provider openalex` | Work metadata and citation counts |
+| `arxiv-api` | Academic | `fast_search.py --provider arxiv` | Preprint metadata and abstracts |
+| `crossref-api` | Academic | `fast_search.py --provider crossref` | DOI and publication metadata |
+| `discourse-json` | Rust, Kubernetes, Docker, NixOS, Home Assistant and verified Discourse sites | `scripts/discourse_search.py` | Topics, posts and replies |
+| `52pojie-public` | 52pojie | `references/local/52pojie-research/scripts/fetch.py` | Public listings, RSS and threads |
+| `rss-atom` | 52pojie, BBC, YouTube, Medium, Substack and academic feeds | `fast_search.py --provider rss` | Feed entries; discovery only |
+| `trafilatura` | Selected web pages after Top-K selection | Optional package | Clean正文; source reading |
+| `readability-lxml` | Selected web pages when primary extraction fails | Optional package | HTML article body; source reading |
+
+The component index also records SearXNG and Semantic Scholar as candidates. They remain optional because public SearXNG instances and no-key Semantic Scholar requests can vary in availability.
 
 ## Upstream AutoCLI catalog
 
