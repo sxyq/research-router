@@ -5,3 +5,6 @@ records/routes/**/*.json
 records/feedback/*.json
 records/summaries/*.json
 records/experience/**/*.jsonl
+
+# The Agent's weekly update check state is local to each Skill installation.
+.research-router-update-state.json

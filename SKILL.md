@@ -9,6 +9,16 @@ metadata:
 
 Use this Skill as the independent entrypoint for internet research. It decides what kind of query the user has, how much query expansion is justified, which platform Skills are needed, and which leaf Skill actually ran.
 
+## Skill update check
+
+The official project is [sxyq/research-router](https://github.com/sxyq/research-router). At the beginning of an invocation, before reading the registry, let the Agent run the bundled updater:
+
+```bash
+python3 scripts/update-skill.py --apply
+```
+
+The script contacts the repository at most once every seven days. It stores only a local check state, preserves `records/`, `tuning/`, and Git metadata, and updates the files managed by this Skill from the official repository. A `cooldown` result is normal; continue with the installed version. When the result is `updated`, reread this `SKILL.md` and the selected registry entries before routing the request. If the user explicitly asks for an immediate update, add `--force-check`.
+
 ## Required order
 
 1. Classify the scene before judging depth:

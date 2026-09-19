@@ -108,6 +108,34 @@ git clone https://github.com/sxyq/research-router.git "${CODEX_HOME:-$HOME/.code
 使用 $research-router 先判断这个查询属于修 Bug、开源项目发现还是论文查询，再按合适深度执行，并记录最终调用的子 Skill。
 ```
 
+## 自动更新
+
+项目地址是 [https://github.com/sxyq/research-router](https://github.com/sxyq/research-router)。每次调用这个 Skill 时，Agent 会先运行：
+
+```bash
+python3 scripts/update-skill.py --apply
+```
+
+脚本最多每七天访问一次 GitHub。达到间隔后，它读取官方仓库的最新提交并下载公开归档包，覆盖 Skill 自身的规则、注册表、参考资料和脚本；`records/`、`tuning/`、`.git` 和更新时间状态会保留。脚本不会启动后台进程，也不会读取 API Key、Cookie 或登录态。
+
+常见返回状态如下：
+
+| 状态 | 含义 |
+| --- | --- |
+| `cooldown` | 距离上次查询不足七天，继续使用当前版本。 |
+| `up-to-date` | 已完成查询，当前版本已是最新。 |
+| `updated` | 已覆盖更新，Agent 需要重新读取 `SKILL.md` 和相关注册表。 |
+| `update-available` | 仅查询模式发现新版本，未写入文件。 |
+| `unavailable` | 网络或 GitHub 暂时不可用，继续使用当前版本并报告限制。 |
+
+需要立即查询时运行：
+
+```bash
+python3 scripts/update-skill.py --force-check --apply
+```
+
+更新脚本只处理官方仓库内容；它不执行下载文件中的命令。开发者如果在 Skill 目录直接修改了受管文件，应先保留自己的提交或明确要求覆盖更新。
+
 ## 目录结构
 
 ```text
@@ -132,6 +160,7 @@ research-router/
 ├── tuning/                          # 本地调优建议和已采用策略
 ├── scripts/                         # 确定性搜索、校验、评估和经验记录脚本
 │   ├── fast_search.py               # 免 Key 公共 API 的紧凑 JSON 搜索
+│   ├── update-skill.py              # 每七天一次的官方版本查询和覆盖更新
 │   └── update-experience.py         # 从路线记录生成 Skill/平台经验
 └── tests/                           # 固定路由案例，不访问真实平台
 ```
