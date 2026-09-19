@@ -18,6 +18,13 @@
     "expected": ["anysearch", "paper-research-router", "literature-evidence-audit"]
   },
   {
+    "name": "medium-google-scholar-paper-brief",
+    "scene": "academic",
+    "depth": "medium",
+    "platform": "google-scholar",
+    "expected": ["paper-research-router", "literature-evidence-audit"]
+  },
+  {
     "name": "medium-52pojie-community",
     "scene": "community",
     "depth": "medium",

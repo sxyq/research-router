@@ -14,6 +14,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from html import unescape
+from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
@@ -92,8 +93,9 @@ def record(
     source: str,
     query: str,
     match_reason: str | None = None,
+    extra: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    return {
+    result: dict[str, object] = {
         "title": clean_text(title, 240),
         "url": str(url or ""),
         "published_at": published_at,
@@ -102,6 +104,9 @@ def record(
         "match_reason": match_reason or f"public search match for: {query}",
         "evidence_level": "discovery",
     }
+    if extra:
+        result.update(extra)
+    return result
 
 
 def search_github(args: argparse.Namespace) -> list[dict[str, object]]:
@@ -316,6 +321,229 @@ def search_arxiv(args: argparse.Namespace) -> list[dict[str, object]]:
     return results
 
 
+class GoogleScholarParser(HTMLParser):
+    """Parse the bounded, public result markup used by Google Scholar."""
+
+    VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.results: list[dict[str, object]] = []
+        self.current: dict[str, object] | None = None
+        self.result_depth: int | None = None
+        self.tag_stack: list[str] = []
+        self.capture: dict[str, object] | None = None
+        self.fl_depth: int | None = None
+        self.fl_link: dict[str, object] | None = None
+        self.pdf_depth: int | None = None
+
+    @staticmethod
+    def _classes(attrs: list[tuple[str, str | None]]) -> set[str]:
+        values = dict(attrs)
+        return set((values.get("class") or "").split())
+
+    def _begin_capture(self, kind: str, tag: str, depth: int) -> None:
+        self.capture = {"kind": kind, "tag": tag, "depth": depth, "parts": []}
+
+    def _finish_capture(self) -> None:
+        if self.capture is None or self.current is None:
+            return
+        parts = self.capture["parts"]
+        value = clean_text(" ".join(parts if isinstance(parts, list) else []), 1200)
+        self.current[str(self.capture["kind"])] = value
+        self.capture = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        depth = len(self.tag_stack)
+        values = dict(attrs)
+        classes = self._classes(attrs)
+        if tag == "div" and "gs_ri" in classes:
+            self.current = {
+                "title": "",
+                "url": "",
+                "authors_line": "",
+                "snippet": "",
+                "pdf_url": "",
+                "fl_links": [],
+            }
+            self.result_depth = depth
+        elif self.current is not None:
+            if tag == "h3" and "gs_rt" in classes:
+                self._begin_capture("title", tag, depth)
+            elif tag == "div" and "gs_a" in classes:
+                self._begin_capture("authors_line", tag, depth)
+            elif tag == "div" and "gs_rs" in classes:
+                self._begin_capture("snippet", tag, depth)
+            elif tag == "div" and "gs_fl" in classes:
+                self.fl_depth = depth
+            elif tag == "div" and "gs_ggs" in classes:
+                self.pdf_depth = depth
+            elif tag == "a":
+                href = values.get("href") or ""
+                if self.pdf_depth is not None and depth > self.pdf_depth:
+                    if not self.current.get("pdf_url"):
+                        self.current["pdf_url"] = href
+                if self.fl_depth is not None and depth > self.fl_depth:
+                    self.fl_link = {"depth": depth, "href": href, "parts": []}
+                elif self.capture is not None and self.capture.get("kind") == "title":
+                    self.current["url"] = href
+        if tag not in self.VOID_TAGS:
+            self.tag_stack.append(tag)
+
+    def handle_data(self, data: str) -> None:
+        if self.capture is not None:
+            parts = self.capture["parts"]
+            if isinstance(parts, list):
+                parts.append(data)
+        if self.fl_link is not None:
+            parts = self.fl_link["parts"]
+            if isinstance(parts, list):
+                parts.append(data)
+
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag not in self.VOID_TAGS:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self.tag_stack:
+            return
+        depth = len(self.tag_stack) - 1
+        if self.capture is not None:
+            if self.capture.get("depth") == depth and self.capture.get("tag") == tag:
+                self._finish_capture()
+        if self.fl_link is not None:
+            if self.fl_link.get("depth") == depth and tag == "a":
+                parts = self.fl_link["parts"]
+                text = clean_text(" ".join(parts if isinstance(parts, list) else []), 240)
+                links = self.current.get("fl_links", []) if self.current else []
+                if isinstance(links, list):
+                    links.append({"href": self.fl_link.get("href", ""), "text": text})
+                self.fl_link = None
+        if tag == "div" and self.current is not None:
+            if self.fl_depth == depth:
+                self.fl_depth = None
+            if self.pdf_depth == depth:
+                self.pdf_depth = None
+            if self.result_depth == depth:
+                self.results.append(self.current)
+                self.current = None
+                self.result_depth = None
+                self.capture = None
+                self.fl_link = None
+                self.fl_depth = None
+                self.pdf_depth = None
+        self.tag_stack.pop()
+
+
+def _scholar_year(authors_line: str) -> str | None:
+    years = re.findall(r"\b(?:19|20)\d{2}\b", authors_line)
+    return years[-1] if years else None
+
+
+def _scholar_authors(authors_line: str) -> list[str]:
+    author_text = re.split(r"\s*[-–—]\s*", authors_line, maxsplit=1)[0]
+    author_text = re.sub(r"[\s.…�]+$", "", author_text).strip()
+    if not author_text:
+        return []
+    return [item.strip() for item in author_text.split(",") if item.strip()]
+
+
+def _scholar_link_counts(item: dict[str, object]) -> tuple[int | None, int | None]:
+    citation_count: int | None = None
+    version_count: int | None = None
+    links = item.get("fl_links", [])
+    if not isinstance(links, list):
+        return citation_count, version_count
+    for link in links:
+        if not isinstance(link, dict):
+            continue
+        text = clean_text(link.get("text"), 240).lower()
+        match = re.search(r"cited by\s+(\d+)", text)
+        if match:
+            citation_count = int(match.group(1))
+        match = re.search(r"(?:all\s+)?(\d+)\s+versions?", text)
+        if match:
+            version_count = int(match.group(1))
+    return citation_count, version_count
+
+
+def search_google_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
+    endpoint = "https://scholar.google.com/scholar"
+    payload = request_bytes(
+        endpoint,
+        {
+            "q": args.query,
+            "start": (args.page - 1) * 10,
+            "num": 10,
+            "hl": "en",
+            "as_sdt": "0,5",
+        },
+        args.timeout,
+        accept="text/html,application/xhtml+xml",
+    )
+    document = payload.decode("utf-8", errors="replace")
+    lowered = document.lower()
+    challenge_markers = (
+        "captcha",
+        "recaptcha",
+        "unusual traffic",
+        "/sorry/",
+        "before you continue to google",
+    )
+    if any(marker in lowered for marker in challenge_markers):
+        raise SearchError(
+            "Google Scholar returned a CAPTCHA, rate-limit, or challenge page; stop without retries"
+        )
+    parser = GoogleScholarParser()
+    parser.feed(document)
+    parser.close()
+    results: list[dict[str, object]] = []
+    for item in parser.results[: args.limit]:
+        authors_line = str(item.get("authors_line") or "")
+        title = str(item.get("title") or "")
+        snippet = str(item.get("snippet") or "")
+        citation_count, version_count = _scholar_link_counts(item)
+        pdf_url = str(item.get("pdf_url") or "")
+        results.append(
+            record(
+                title,
+                urljoin(endpoint, str(item.get("url") or "")),
+                snippet,
+                _scholar_year(authors_line),
+                "google-scholar",
+                args.query,
+                "Google Scholar public HTML discovery; abstract snippet only",
+                {
+                    "authors": _scholar_authors(authors_line),
+                    "citation_count": citation_count,
+                    "version_count": version_count,
+                    "pdf_url": urljoin(endpoint, pdf_url) if pdf_url else None,
+                    "abstract_status": "snippet-only" if snippet else "missing",
+                    "retrieval_stage": "discovery",
+                },
+            )
+        )
+    return results
+
+
 def search_discourse(args: argparse.Namespace) -> list[dict[str, object]]:
     if not args.base_url:
         raise SearchError("--base-url is required for the discourse provider")
@@ -413,6 +641,7 @@ SEARCHERS = {
     "openalex": search_openalex,
     "crossref": search_crossref,
     "arxiv": search_arxiv,
+    "google-scholar": search_google_scholar,
     "discourse": search_discourse,
     "rss": search_rss,
     "ddgs": search_ddgs,
@@ -424,6 +653,11 @@ LIMITS = {
     "stackoverflow": ["Respect Stack Exchange quota, backoff, and API policies."],
     "openalex": ["Public access may return 429; retry later and identify the client when possible."],
     "arxiv": ["Use a polite request interval; the endpoint is for discovery metadata."],
+    "google-scholar": [
+        "Public HTML discovery only; result snippets are not guaranteed to be complete abstracts.",
+        "Use a low request rate and stop on 403, 429, CAPTCHA, or challenge pages; do not retry aggressively.",
+        "Enrich selected records with OpenAlex, arXiv, Crossref, or the publisher before paper-brief or full evidence.",
+    ],
     "crossref": ["Metadata is discovery evidence; read the source or DOI page for claims."],
     "ddgs": ["Underlying search engines may vary in availability and ranking."],
     "rss": ["A feed covers only the publisher's exposed entries, not its full archive."],
@@ -449,6 +683,8 @@ def main() -> int:
         parser.error("--timeout must be positive")
     if args.page < 1:
         parser.error("--page must be positive")
+    if args.provider == "google-scholar" and args.limit > 10:
+        parser.error("--limit must be between 1 and 10 for google-scholar")
     try:
         results = SEARCHERS[args.provider](args)
     except SearchError as exc:

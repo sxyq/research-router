@@ -1,0 +1,27 @@
+{
+  "platform_id": "google-scholar",
+  "display_name": "Google Scholar",
+  "aliases": ["google scholar", "谷歌学术", "Google学术", "scholar"],
+  "scenes": ["academic"],
+  "tier": 1,
+  "route_skills": ["paper-research-router", "literature-evidence-audit"],
+  "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/extract_paper_brief.py"],
+  "search_components": ["google-scholar-html", "openalex-api", "arxiv-api", "crossref-api", "semantic-scholar-api", "trafilatura"],
+  "adapter_type": "local-script-and-academic-chain",
+  "access_mode": "public-html-and-public-metadata",
+  "status": "router-registered-local",
+  "script_note": "Use fast_search.py --provider google-scholar for bounded public discovery without an API key. Enrich selected records with public metadata, then use paper-brief or full evidence.",
+  "capabilities": ["paper discovery", "title and author lookup", "year lookup", "citation and version lookup", "abstract snippet discovery", "PDF candidate discovery", "paper brief"],
+  "retrieval_stages": {
+    "discovery": "Find candidates and return title, author, year, citation/version counts, links, and snippet-only text.",
+    "paper-brief": "For selected papers, supplement metadata and abstract, extract section outline, and quote only author-stated contributions.",
+    "full-audit": "Only on explicit request, read the primary PDF or body for methods, results, limitations, and exact claims."
+  },
+  "depth_routes": {
+    "light": ["paper-research-router"],
+    "medium": ["paper-research-router", "literature-evidence-audit"],
+    "deep": ["paper-research-router", "literature-evidence-audit"]
+  },
+  "source_requirement": "Google Scholar snippets are discovery evidence only. Metadata enrichment, paper-brief, or primary paper evidence is required for claims beyond candidate discovery.",
+  "agent_rule": "One academic Agent owns Scholar discovery, metadata enrichment, selected-paper brief extraction, and any explicitly requested full evidence stage."
+}

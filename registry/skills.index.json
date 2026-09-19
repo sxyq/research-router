@@ -82,7 +82,7 @@
       "kind": "academic-evidence",
       "source": "local:${CODEX_HOME}/skills/literature-evidence-audit/SKILL.md",
       "load": "on-demand",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "status": "local-installed"
     },
     {
@@ -92,7 +92,7 @@
       "kind": "academic-router",
       "source": "local:../../paper-research-router/SKILL.md",
       "load": "on-demand",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "status": "local-installed"
     },
     {

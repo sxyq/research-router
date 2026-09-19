@@ -5,6 +5,6 @@
   "kind": "academic-router",
   "source": "local:../../paper-research-router/SKILL.md",
   "load": "on-demand",
-  "platforms": ["academic"],
+  "platforms": ["academic", "google-scholar"],
   "status": "local-installed"
 }

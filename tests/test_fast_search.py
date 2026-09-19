@@ -69,6 +69,46 @@ class FastSearchTests(unittest.TestCase):
         self.assertEqual(results[0]["url"], "https://arxiv.org/abs/1234.5678")
         self.assertEqual(results[0]["evidence_level"], "discovery")
 
+    def test_google_scholar_html_is_normalized(self):
+        html = b"""
+        <div class="gs_ri">
+          <h3 class="gs_rt"><a href="https://doi.org/10.1000/example">Agentic Search Systems</a></h3>
+          <div class="gs_a">Ada Lovelace, Alan Turing - Journal of Search, 2026 - example.org</div>
+          <div class="gs_rs">A concise abstract-like<br> result snippet for discovery.</div>
+          <div class="gs_ggs"><div><a href="https://example.org/paper.pdf">[PDF]</a></div></div>
+          <div class="gs_fl">
+            <a href="/scholar?cites=1">Cited by 42</a>
+            <a href="/scholar?cluster=1">All 5 versions</a>
+          </div>
+        </div>
+        """
+        original = fast_search.request_bytes
+        fast_search.request_bytes = lambda *args, **kwargs: html
+        try:
+            results = fast_search.search_google_scholar(self.args(query="agentic search"))
+        finally:
+            fast_search.request_bytes = original
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertEqual(result["title"], "Agentic Search Systems")
+        self.assertNotIn("Cited by", result["excerpt"])
+        self.assertEqual(result["published_at"], "2026")
+        self.assertEqual(result["authors"], ["Ada Lovelace", "Alan Turing"])
+        self.assertEqual(result["citation_count"], 42)
+        self.assertEqual(result["version_count"], 5)
+        self.assertEqual(result["pdf_url"], "https://example.org/paper.pdf")
+        self.assertEqual(result["abstract_status"], "snippet-only")
+        self.assertEqual(result["retrieval_stage"], "discovery")
+
+    def test_google_scholar_challenge_stops_without_parsing(self):
+        original = fast_search.request_bytes
+        fast_search.request_bytes = lambda *args, **kwargs: b"<html>unusual traffic</html>"
+        try:
+            with self.assertRaises(fast_search.SearchError):
+                fast_search.search_google_scholar(self.args())
+        finally:
+            fast_search.request_bytes = original
+
     def test_rss_supports_atom_links(self):
         xml = b"""<?xml version='1.0' encoding='UTF-8'?>
         <feed xmlns='http://www.w3.org/2005/Atom'>

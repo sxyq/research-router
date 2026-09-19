@@ -9,6 +9,7 @@
     "v2ex",
     "github",
     "academic",
+    "google-scholar",
     "stackoverflow",
     "52pojie",
     "discourse"
@@ -32,7 +33,7 @@
     "read_selected_sources_only": true
   },
   "platform_tiers": {
-    "tier-1": ["github", "academic"],
+    "tier-1": ["github", "academic", "google-scholar"],
     "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "discourse", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],
     "tier-3": ["bilibili", "douyin", "tiktok", "xiaohongshu", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"]
   },

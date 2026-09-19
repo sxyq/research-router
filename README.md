@@ -167,7 +167,7 @@ research-router/
 
 ## 默认路由
 
-入口 Skill 中直接保留当前已登记平台的快速索引；完整的平台级别、入口 Skill、脚本/适配器和上游候选目录见 [references/platform-index.md](references/platform-index.md)。当前分级为：一级 `github`、`academic`；二级 `52pojie`、`stackoverflow`、`linux-do`、`v2ex`；三级为视频、社交和补充发现平台。52pojie 固定为二级。
+入口 Skill 中直接保留当前已登记平台的快速索引；完整的平台级别、入口 Skill、脚本/适配器和上游候选目录见 [references/platform-index.md](references/platform-index.md)。当前分级为：一级 `github`、`academic`、`google-scholar`；二级 `52pojie`、`stackoverflow`、`linux-do`、`v2ex`；三级为视频、社交和补充发现平台。52pojie 固定为二级。
 
 | 级别 | 平台或场景 | `light` | `medium` | `deep` |
 | --- | --- | --- | --- |
@@ -181,6 +181,7 @@ research-router/
 | 1 | GitHub | `github-search` | `github-search` → `github-analyze` | 上述两项 + `last30days-cn` |
 | 2 | 吾爱破解 / 52pojie.cn | `52pojie-research` | `52pojie-research`：列表/RSS → 选定帖子 | `52pojie-research`：热门、分页帖子与回帖 |
 | 1 | 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
+| 1 | Google Scholar | `paper-research-router` | `paper-research-router` + `literature-evidence-audit`（paper-brief） | 同上，明确要求后才进入全文证据 |
 
 `qiaomu-smart-search` 与 AutoCLI/OpenCLI 属于重叠入口，当前不放入默认活动路由。需要切换候选时，先更新注册表并保留评分依据。
 
@@ -193,9 +194,10 @@ python3 scripts/fast_search.py --provider github --query "skill router" --limit 
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider openalex --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "tool use token efficiency" --limit 5
+python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 ```
 
-当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Discourse、RSS/Atom 和可选 `ddgs`。结果的 `evidence_level` 默认是 `discovery`；只有选定 URL 被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
+当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`。Google Scholar 不需要 API Key，返回标题、作者、年份、引用/版本数量、PDF 候选和摘要片段；摘要片段只用于发现。结果的 `evidence_level` 默认是 `discovery`；只有选定来源被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
 
 建议的执行链是：
 
@@ -209,6 +211,14 @@ python3 scripts/fast_search.py --provider arxiv --query "tool use token efficien
 ```
 
 `ddgs`、SearXNG、Semantic Scholar、`trafilatura` 和 `readability-lxml` 已登记为可选免 Key 组件。它们的安装状态、公共实例、限流和返回质量需要在运行时分别确认。
+
+学术查询统一按下面的阶段推进：
+
+```text
+discovery -> selected papers -> paper-brief -> explicit full-audit
+```
+
+先用 Scholar、OpenAlex、arXiv 或 Crossref 找候选；用户选定论文后，再补摘要、章节大纲和作者明确写出的贡献；只有用户明确要求方法、实验数值、局限或原文引用时，才读取全文证据。`academic-evidence/scripts/extract_paper_brief.py` 可从本地 PDF 生成中间结果。
 
 详细调用方式见 [references/search-components.md](references/search-components.md)。
 

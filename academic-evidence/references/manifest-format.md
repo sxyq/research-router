@@ -30,6 +30,11 @@ Use a JSON array. Each object represents one paper.
 - `local_pdf`: local relative or absolute PDF path after download
 - `second_link_label`: `Page` or `DOI`
 - `status`: optional audit state such as `verified` or `needs-review`
+- `abstract_text`: selected-paper abstract text from a primary or trusted metadata source
+- `abstract_source`: `primary-pdf`, `arxiv`, `openalex`, `crossref`, `publisher`, or another named source
+- `section_outline`: array of `{title, page}` objects from the paper's headings; this is an outline, not a formal table of contents
+- `contributions`: array of author-stated contribution objects with `text`, `type`, and `source`
+- `retrieval_stage`: `discovery`, `paper-brief`, or `full-audit`
 
 ## Notes
 
@@ -38,3 +43,4 @@ Use a JSON array. Each object represents one paper.
 - If `page_url` is a DOI redirect, set or expect `second_link_label` to `DOI`.
 - `download_pdfs.py` writes `local_pdf` back into the manifest when asked to update in place.
 - `rebuild_evidence_table.py --ensure-local-pdfs <dir> --write-manifest` can download missing PDFs automatically and name them as `引用编号 + 论文标题`.
+- `academic-evidence/scripts/extract_paper_brief.py <paper.pdf>` extracts the abstract, section outline, and explicitly stated contributions without claiming a full body audit.

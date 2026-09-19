@@ -13,6 +13,7 @@ python3 scripts/fast_search.py --provider hacker-news --query "agentic search" -
 python3 scripts/fast_search.py --provider openalex --query "tool use language model" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider crossref --query "agentic search" --limit 5
+python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider wikipedia --query "retrieval augmented generation" --limit 5
 python3 scripts/fast_search.py --provider dev-to --query "python" --limit 5
 python3 scripts/fast_search.py --provider rss --feed-url "https://example.com/feed.xml" --query "latest" --limit 5
@@ -46,6 +47,7 @@ python3 scripts/fast_search.py --provider ddgs --query "public web research API"
 | `dev-to` | Dev.to | Forem API | 标签下的文章、摘要、时间 | 文章发现；需要读取文章正文 |
 | `wikipedia` | Wikipedia | MediaWiki API | 页面标题和搜索摘要 | 页面发现；正文才能支撑事实判断 |
 | `discourse` | Discourse 社区 | `/search.json` | 主题、帖子、作者、时间 | 论坛发现；继续读取主题和回复 |
+| `google-scholar` | Google Scholar | 公开 Scholar HTML | 标题、作者、年份、引用数、版本数、PDF 候选、摘要片段 | 论文候选发现；摘要片段不支撑正文结论 |
 | `rss` | RSS/Atom 来源 | Feed XML | 标题、链接、摘要、时间 | 最新内容发现；不能代表完整站点 |
 
 ## 学术组件
@@ -57,7 +59,22 @@ python3 scripts/fast_search.py --provider ddgs --query "public web research API"
 | `crossref` | 元数据 | 查询 DOI、作者、出版时间和期刊 | 进入 DOI 或出版方页面 |
 | `semantic-scholar` | 补充 | 语义相近论文、引用和参考文献 | 受到限流时切回 OpenAlex/arXiv |
 
-学术发现结果默认是 `evidence_level: discovery`。论文方法、实验数字和限制必须继续使用 `academic-evidence` 读取正文或 PDF。
+Google Scholar 没有稳定的官方免 Key API；本地 provider 低频访问公开结果页，遇到 403、429、验证码或挑战页就停止。它返回的 `gs_rs` 内容是摘要片段，通常不等于完整摘要。选定论文后按下面的阶段处理：
+
+```text
+Google Scholar discovery
+  -> OpenAlex/arXiv/Crossref/publisher metadata enrichment
+  -> paper-brief: abstract + section outline + author-stated contributions
+  -> explicit full-audit: primary PDF/body evidence
+```
+
+本地 PDF 的中间结果可运行：
+
+```bash
+python3 academic-evidence/scripts/extract_paper_brief.py path/to/paper.pdf
+```
+
+学术发现结果默认是 `evidence_level: discovery`。论文方法、实验数字和限制必须继续使用 `academic-evidence` 的全文阶段读取正文或 PDF；普通论文概览可先停在 `paper-brief`。
 
 ## 内容提取组件
 

@@ -6,7 +6,7 @@ This index is the source for platform routing in this repository. `router-regist
 
 | Tier | Use | Current examples |
 | --- | --- | --- |
-| 1 | Core source or primary implementation evidence | GitHub, academic |
+| 1 | Core source or primary implementation evidence | GitHub, academic, Google Scholar |
 | 2 | Technical communities and specialist public discussions | 52pojie, Stack Overflow, Linux.do, V2EX |
 | 3 | Supplemental discovery, media, social, finance, or desktop sources | Bilibili, Douyin, TikTok, Xiaohongshu |
 
@@ -18,6 +18,7 @@ The tier describes research priority and evidence strength. It does not prove th
 | --- | --- | --- | --- | --- |
 | 1 | GitHub (`github`) | `github-search` -> `github-analyze`; deep may add `last30days-cn` | `scripts/fast_search.py --provider github`; source analysis remains external | Public repositories. Source-level claims require tree, source, dependencies, tests, Issues, and Releases. |
 | 1 | Academic (`academic`) | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local | Paper discovery and primary PDF/body evidence. |
+| 1 | Google Scholar (`google-scholar`) | `paper-research-router` -> `literature-evidence-audit` | `scripts/fast_search.py --provider google-scholar`; `academic-evidence/scripts/extract_paper_brief.py` for selected local PDFs | Public HTML discovery without a key. Results include title, author, year, citations, versions, PDF candidate, and snippet-only text. Enrich selected papers before evidence claims. |
 | 2 | 吾爱破解 (`52pojie`) | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` | Local public HTML/RSS/thread reader. No login, captcha, member pages, redirects, or attachments. |
 | 2 | Stack Overflow (`stackoverflow`) | `autocli`, `anysearch`; `github-analyze` only for a repository-linked bug | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub | Public questions, answers, and code patterns. |
 | 2 | Linux.do (`linux-do`) | `autocli` | External CLI; Discourse adapter is a candidate after endpoint verification | Public or browser-backed community content; login state can affect access. |
@@ -46,6 +47,7 @@ The complete component registry is [registry/search-components.index.json](../re
 | `openalex-api` | Academic | `fast_search.py --provider openalex` | Work metadata and citation counts |
 | `arxiv-api` | Academic | `fast_search.py --provider arxiv` | Preprint metadata and abstracts |
 | `crossref-api` | Academic | `fast_search.py --provider crossref` | DOI and publication metadata |
+| `google-scholar-html` | Google Scholar | `fast_search.py --provider google-scholar` | Candidate title, authors, year, citation/version counts, PDF candidate, and snippet-only text |
 | `discourse-json` | Rust, Kubernetes, Docker, NixOS, Home Assistant and verified Discourse sites | `scripts/discourse_search.py` | Topics, posts and replies |
 | `52pojie-public` | 52pojie | `references/local/52pojie-research/scripts/fetch.py` | Public listings, RSS and threads |
 | `rss-atom` | 52pojie, BBC, YouTube, Medium, Substack and academic feeds | `fast_search.py --provider rss` | Feed entries; discovery only |
@@ -53,6 +55,16 @@ The complete component registry is [registry/search-components.index.json](../re
 | `readability-lxml` | Selected web pages when primary extraction fails | Optional package | HTML article body; source reading |
 
 The component index also records SearXNG and Semantic Scholar as candidates. They remain optional because public SearXNG instances and no-key Semantic Scholar requests can vary in availability.
+
+## Academic staged retrieval
+
+The academic route is shared by `academic` and `google-scholar`:
+
+```text
+discovery -> selected papers -> paper-brief -> explicit full-audit
+```
+
+`discovery` finds candidates. `paper-brief` supplements the abstract and extracts a section outline and author-stated contributions. `full-audit` reads the primary PDF or body only when the user asks for detailed methods, results, limitations, or quotations.
 
 ## Upstream AutoCLI catalog
 

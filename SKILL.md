@@ -49,6 +49,7 @@ Use this table to map a platform to its entry Skill and script or adapter. `exte
 | --- | --- | --- | --- |
 | 1 | GitHub | `github-search` -> `github-analyze` | `scripts/fast_search.py --provider github`; source analysis remains external |
 | 1 | Academic | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local |
+| 1 | Google Scholar | `paper-research-router` -> `literature-evidence-audit` | `scripts/fast_search.py --provider google-scholar`; selected local PDFs use `academic-evidence/scripts/extract_paper_brief.py` |
 | 2 | 52pojie / 吾爱破解 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` |
 | 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub |
 | 2 | Linux.do | `autocli` | `external` CLI; use the Discourse adapter only after endpoint verification |
@@ -69,12 +70,21 @@ The component-to-platform mapping is maintained in `registry/search-components.i
 python3 scripts/fast_search.py --provider github --query "skill router" --limit 5
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "agentic search" --limit 5
+python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider discourse --base-url https://users.rust-lang.org --query "webview bridge" --limit 5
 ```
 
-Supported public providers are GitHub, Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Discourse, RSS/Atom, and optional `ddgs`. Results contain titles, URLs, short excerpts, dates, source identifiers, and `evidence_level: discovery`; they do not contain raw pages. Read only selected URLs with a platform reader or an optional content extractor.
+Supported public providers are GitHub, Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Google Scholar, Discourse, RSS/Atom, and optional `ddgs`. Results contain titles, URLs, short excerpts, dates, source identifiers, and `evidence_level: discovery`; they do not contain raw pages. Google Scholar also returns authors, citation/version counts, and a PDF candidate when exposed. Its result text is snippet-only.
 
 `ddgs`, SearXNG, Semantic Scholar, and content-extraction packages are registered as optional no-key candidates. Their availability, rate limits, or package installation must be confirmed at runtime. Paid or credentialed services are outside this default path.
+
+For academic requests, keep the retrieval stages separate:
+
+```text
+discovery -> selected papers -> paper-brief -> explicit full-audit
+```
+
+Use `paper-brief` for an abstract, section outline, and author-stated contributions. Use `academic-evidence/scripts/extract_paper_brief.py` for a local PDF. Run the full evidence route only when the user asks for detailed methods, results, limitations, or quotations. This sequence applies to the general `academic` route as well as Google Scholar.
 
 ## Route lifecycle and platform dispatch
 
@@ -137,4 +147,4 @@ Read the relevant reference before applying details:
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
 - The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
 - GitHub discovery can use `github-search`; a source-level request must continue to `github-analyze` and inspect README, tree, source, dependencies, tests, Issues, and Releases.
-- Academic discovery can use `autocli` or `anysearch`; a claim-to-paper check must continue to `literature-evidence-audit` and verify the primary paper body or PDF.
+- Academic discovery can use `autocli`, `anysearch`, or `fast_search.py --provider google-scholar`; a selected-paper brief may use `literature-evidence-audit` in `paper-brief` mode, while detailed claims must continue to the primary paper body or PDF.

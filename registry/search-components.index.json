@@ -110,7 +110,7 @@
       "source": "https://docs.openalex.org/api-entities/works",
       "requires_api_key": false,
       "status": "candidate-no-key",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "providers": ["openalex"],
       "output": ["title", "url", "authors", "venue", "publication_date", "cited_by_count"],
       "limits": ["Public access can return 429", "Metadata and citation counts do not replace paper body evidence"]
@@ -122,10 +122,22 @@
       "source": "https://info.arxiv.org/help/api/index.html",
       "requires_api_key": false,
       "status": "local-included-via-fast-search",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "providers": ["arxiv"],
       "output": ["title", "url", "summary", "published_at"],
       "limits": ["Use a polite request interval", "Abstracts locate papers; detailed claims require the PDF or source body"]
+    },
+    {
+      "id": "google-scholar-html",
+      "display_name": "Google Scholar public HTML discovery",
+      "kind": "local-html-adapter",
+      "source": "local:scripts/fast_search.py",
+      "requires_api_key": false,
+      "status": "local-included",
+      "platforms": ["google-scholar"],
+      "providers": ["google-scholar"],
+      "output": ["title", "authors", "published_at", "citation_count", "version_count", "pdf_url", "abstract_status", "retrieval_stage"],
+      "limits": ["Direct public HTML has no official API guarantee", "Result text is an abstract-like snippet and may be incomplete", "Use low-frequency bounded requests and stop on 403, 429, CAPTCHA, or challenge pages", "Enrich selected papers through OpenAlex, arXiv, Crossref, or the publisher before evidence work"]
     },
     {
       "id": "crossref-api",
@@ -134,7 +146,7 @@
       "source": "https://api.crossref.org/",
       "requires_api_key": false,
       "status": "local-included-via-fast-search",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "providers": ["crossref"],
       "output": ["title", "doi", "authors", "published_at", "url"],
       "limits": ["Crossref confirms metadata, not the paper's findings"]
@@ -146,7 +158,7 @@
       "source": "https://api.semanticscholar.org/api-docs/",
       "requires_api_key": false,
       "status": "candidate-no-key-rate-limited",
-      "platforms": ["academic"],
+      "platforms": ["academic", "google-scholar"],
       "providers": ["semantic-scholar"],
       "output": ["title", "url", "year", "citations", "references"],
       "limits": ["No-key access can return 429", "Use as a supplement, not the only academic source"]
@@ -194,7 +206,7 @@
       "source": "https://pypi.org/project/trafilatura/",
       "requires_api_key": false,
       "status": "candidate-no-key",
-      "platforms": ["github", "academic", "stackoverflow", "discourse", "bbc", "medium", "substack"],
+      "platforms": ["github", "academic", "google-scholar", "stackoverflow", "discourse", "bbc", "medium", "substack"],
       "providers": ["extract"],
       "output": ["title", "text", "date", "author"],
       "limits": ["It reads a selected URL and does not perform search", "Keep extraction after Top-K selection to control context size"]
