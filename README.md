@@ -452,7 +452,16 @@ python3 scripts/summarize-feedback.py
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" .
 ```
 
-固定路由案例位于 `tests/routing-cases/basic-cases.json`。这些案例只核验预期路由，不调用网络平台。
+`tests/routing-cases/basic-cases.json` 收录 Research Router Agent 的语义行为预期，包括上下文继承和查询规划。它们不是正则或关键词解析器的自动测试；Python 测试只校验案例文件结构和确定性代码，不判断 Agent 的语义答案。
+
+YouTube 或 Twitter/X 被选中时，只探测该平台的本机 runtime：
+
+```bash
+python3 scripts/probe_runtime.py --platform youtube
+python3 scripts/probe_runtime.py --platform twitter-x
+```
+
+Probe 只查询登记的可执行文件和安全的版本命令。它不发起搜索、不登录、不读取浏览器 Cookie，也不启动 OpenCLI daemon。发现可执行文件不代表平台搜索已经验证。
 
 ## 隐私边界
 

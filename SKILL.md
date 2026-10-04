@@ -59,6 +59,7 @@ The script contacts the repository at most once every seven days. It stores only
 2. Choose one interaction mode:
    - `direct`: the target and goal are usable; start with the supplied conditions and record any remaining evidence gap.
    - `clarify`: ask one focused question only when a missing target, scope, or acceptance condition would change the route.
+   A `direct` plan requires non-empty `requirement.target`, `requirement.goal`, at least one base query, at least one selected platform, and at least one platform-specific query per selected platform. A `clarify` plan may defer queries and platforms; any platform already present must still resolve through Registry and remain within `explicit_platforms` when that scope is set.
 3. Classify the main scene:
    - `bug-fix`: find solutions, issue discussions, patches, tests, and implementation details.
    - `open-source`: discover projects, Skills, plugins, tools, and community adoption.
@@ -71,10 +72,11 @@ The script contacts the repository at most once every seven days. It stores only
    For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes. For public API discovery, use `scripts/fast_search.py` and return compact JSON before selecting pages for reading.
 7. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
 8. Build one dispatch packet per selected platform. The Agent supplies the platform, goal, queries, evidence requirement, and stop condition. Registry resolution supplies the tier, Skill order, script paths, search components, adapter type, access mode, and depth routes.
-9. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
-10. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
-11. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
-12. Return a concise result with the answer, actual source scope, final Skill path, evidence gaps, route evaluation, and the next action if one is required. When the user later provides a score, write a matching file under `records/feedback/YYYY-MM-DD/`.
+9. If YouTube or Twitter/X was selected, run `scripts/probe_runtime.py` for only those selected platform IDs. This reads local executable state; it does not prove search worked. Do not probe at Router initialization, inspect browser cookies, run login commands, or start OpenCLI.
+10. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
+11. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
+12. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
+13. Return a concise result with the answer, actual source scope, final Skill path, evidence gaps, route evaluation, and the next action if one is required. When the user later provides a score, write a matching file under `records/feedback/YYYY-MM-DD/`.
 
 ## Platform quick index
 

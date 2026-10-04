@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install test dependencies
+        run: python -m pip install pytest jsonschema
+      - name: Validate registry
+        run: python scripts/validate-registry.py
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Compile scripts
+        run: python -m compileall -q scripts

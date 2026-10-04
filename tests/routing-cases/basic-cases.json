@@ -36,6 +36,21 @@
     }
   },
   {
+    "name": "deep-default-multi-platform",
+    "request": "深入研究 research-router 的源码实现、实际用户反馈、教程和最近问题，并做交叉验证",
+    "semantic_expectations": {
+      "depth": "deep",
+      "explicit_platforms": [],
+      "minimum_platform_count": 3,
+      "platform_queries_must_differ": true,
+      "coverage_groups": [
+        "GitHub source evidence",
+        "community evidence",
+        "tutorial/media or another independent source"
+      ]
+    }
+  },
+  {
     "name": "deep-cross-platform-research",
     "request": "跨平台深入研究一个开源研究工具的实现、教程和社区反馈，并保留独立来源",
     "expected": {
@@ -75,8 +90,18 @@
     }
   },
   {
-    "name": "platform-aliases",
-    "requests": ["油管上的教程", "推特上的开发者反馈", "查看 x.com 上的讨论"],
-    "expected_platforms": ["youtube", "twitter-x", "twitter-x"]
+    "name": "platform-alias-youtube",
+    "request": "油管上的教程",
+    "semantic_expectations": {"explicit_platforms": ["youtube"]}
+  },
+  {
+    "name": "platform-alias-twitter",
+    "request": "推特上的开发者反馈",
+    "semantic_expectations": {"explicit_platforms": ["twitter-x"]}
+  },
+  {
+    "name": "platform-alias-x-com",
+    "request": "查看 x.com 上的讨论",
+    "semantic_expectations": {"explicit_platforms": ["twitter-x"]}
   }
 ]

@@ -72,11 +72,19 @@ def canonicalize_platform(value: str) -> str:
     raise PlanError(f"unknown platform alias or id: {value!r}")
 
 
-def _string_list(value: Any, field: str, *, allow_empty: bool = True) -> list[str]:
+def _string_list(
+    value: Any,
+    field: str,
+    *,
+    allow_empty_list: bool = True,
+    allow_empty_items: bool = False,
+) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise PlanError(f"{field} must be a list of strings")
     result = [item.strip() for item in value]
-    if not allow_empty and any(not item for item in result):
+    if not allow_empty_list and not result:
+        raise PlanError(f"{field} must contain at least one item")
+    if not allow_empty_items and any(not item for item in result):
         raise PlanError(f"{field} cannot contain empty strings")
     return result
 
@@ -129,7 +137,12 @@ def complete_dispatch_packet(
         raise PlanError("platform plan is missing platform_id")
     platform_id = canonicalize_platform(agent_platform["platform_id"])
     entry = load_platform(platform_id)
-    queries = _string_list(agent_platform.get("queries", []), f"platforms[{platform_id}].queries", allow_empty=False)
+    require_queries = agent_platform.get("_require_queries", False)
+    queries = _string_list(
+        agent_platform.get("queries", []),
+        f"platforms[{platform_id}].queries",
+        allow_empty_list=not require_queries,
+    )
     routes = entry.get("depth_routes")
     if isinstance(routes, dict):
         skill_order = routes.get(depth)
@@ -186,27 +199,46 @@ def resolve_route_plan(value: Any) -> dict[str, Any]:
     for field, allowed in (("scene", SCENES), ("interaction_mode", INTERACTION_MODES), ("depth", DEPTHS)):
         if value.get(field) not in allowed:
             raise PlanError(f"{field} must be one of: {', '.join(sorted(allowed))}")
-    query_variants = _string_list(value.get("query_variants"), "query_variants", allow_empty=False)
-    raw_platforms = value.get("platforms")
+    interaction_mode = value["interaction_mode"]
+    if interaction_mode == "direct":
+        for field in ("target", "goal"):
+            if not requirement[field]:
+                raise PlanError(f"direct routes require a non-empty requirement.{field}")
+    query_variants = _string_list(
+        value.get("query_variants", []),
+        "query_variants",
+        allow_empty_list=interaction_mode != "direct",
+    )
+    raw_platforms = value.get("platforms", [])
     if not isinstance(raw_platforms, list):
         raise PlanError("platforms must be a list")
+    if interaction_mode == "direct" and not raw_platforms:
+        raise PlanError("direct routes require at least one selected platform")
 
     platforms: list[dict[str, Any]] = []
     seen: set[str] = set()
+    explicit_platforms = set(requirement["explicit_platforms"])
     for agent_platform in raw_platforms:
         if not isinstance(agent_platform, dict) or "platform_id" not in agent_platform:
             raise PlanError("each platform plan must include platform_id")
         canonical = canonicalize_platform(agent_platform["platform_id"])
+        if explicit_platforms and canonical not in explicit_platforms:
+            raise PlanError(
+                f"selected platform {canonical!r} is outside explicit platform scope "
+                f"{sorted(explicit_platforms)!r}"
+            )
         if canonical in seen:
             raise PlanError(f"duplicate platform in Agent plan: {canonical}")
         seen.add(canonical)
+        packet_input = dict(agent_platform)
+        packet_input["_require_queries"] = interaction_mode == "direct"
         platforms.append(
-            complete_dispatch_packet(agent_platform, requirement=requirement, depth=value["depth"])
+            complete_dispatch_packet(packet_input, requirement=requirement, depth=value["depth"])
         )
 
     result: dict[str, Any] = {
         "requirement": requirement,
-        "interaction_mode": value["interaction_mode"],
+        "interaction_mode": interaction_mode,
         "scene": value["scene"],
         "depth": value["depth"],
         "query_variants": query_variants,

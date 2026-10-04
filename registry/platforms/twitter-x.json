@@ -4,11 +4,28 @@
   "aliases": ["twitter", "Twitter", "twitter/x", "Twitter/X", "推特", "x.com", "twitter.com"],
   "tier": 2,
   "route_skills": ["autocli"],
-  "scripts": [],
+  "scripts": ["scripts/probe_runtime.py"],
   "search_components": [],
   "adapter_type": "external-cli",
   "access_mode": "explicit-credentials-or-external-session",
   "status": "router-registered",
+  "runtime": {
+    "executables": [
+      {
+        "id": "twitter-cli",
+        "commands": ["twitter"],
+        "credential_env": ["TWITTER_AUTH_TOKEN", "TWITTER_CT0"]
+      },
+      {"id": "opencli", "commands": ["opencli"], "probe_args": ["--version"], "session": "browser-extension-session-not-probed"},
+      {
+        "id": "bird-cli",
+        "commands": ["bird", "birdx"],
+        "credential_env": ["AUTH_TOKEN", "CT0"]
+      }
+    ],
+    "capabilities_require_live_test": ["search", "post detail", "user timeline"],
+    "session_policy": "Do not read browser cookies, run login commands, or start OpenCLI daemon during a runtime probe."
+  },
   "script_note": "Use a tested twitter-cli or OpenCLI route when available; do not read browser cookies implicitly.",
   "capabilities": ["search", "post detail", "long post", "user timeline", "recent discussion"],
   "depth_routes": {

@@ -237,6 +237,43 @@ def main() -> int:
                     if component_id not in component_ids:
                         errors.append(f"{path.name}: unknown search component {component_id!r}")
 
+            runtime = data.get("runtime")
+            if runtime is not None:
+                if not isinstance(runtime, dict):
+                    errors.append(f"{path.name}: runtime must be an object")
+                else:
+                    executables = runtime.get("executables", [])
+                    if not isinstance(executables, list):
+                        errors.append(f"{path.name}: runtime.executables must be a list")
+                    else:
+                        for runtime_entry in executables:
+                            if not isinstance(runtime_entry, dict):
+                                errors.append(f"{path.name}: each runtime executable must be an object")
+                                continue
+                            if not isinstance(runtime_entry.get("id"), str):
+                                errors.append(f"{path.name}: runtime executable requires an id")
+                            commands = runtime_entry.get("commands")
+                            if not isinstance(commands, list) or not commands or not all(
+                                isinstance(command, str) and command for command in commands
+                            ):
+                                errors.append(f"{path.name}: runtime executable commands must be a non-empty string list")
+                    prerequisites = runtime.get("required_any", [])
+                    if not isinstance(prerequisites, list):
+                        errors.append(f"{path.name}: runtime.required_any must be a list")
+                    else:
+                        for requirement in prerequisites:
+                            if not isinstance(requirement, dict):
+                                errors.append(f"{path.name}: runtime prerequisites must be objects")
+                                continue
+                            commands = requirement.get("commands")
+                            if not isinstance(requirement.get("id"), str) or not isinstance(commands, list) or not commands or not all(
+                                isinstance(command, str) and command for command in commands
+                            ):
+                                errors.append(f"{path.name}: runtime prerequisite requires id and command list")
+                    capabilities = runtime.get("capabilities_require_live_test", [])
+                    if not isinstance(capabilities, list) or not all(isinstance(item, str) for item in capabilities):
+                        errors.append(f"{path.name}: runtime.capabilities_require_live_test must be a string list")
+
             if platform_id == "52pojie":
                 expected_script = "references/local/52pojie-research/scripts/fetch.py"
                 if data.get("tier") != 2:

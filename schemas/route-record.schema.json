@@ -3,7 +3,7 @@
   "$id": "https://github.com/sxyq/research-router/schema/route-record.schema.json",
   "title": "Research Router Route Record",
   "type": "object",
-  "required": ["route_id", "created_at", "scene", "interaction_mode", "depth", "query_variants", "platforms", "router_path", "executed_leaf_skills", "final_leaf_skills", "source_coverage", "stop_reason", "status"],
+  "required": ["route_id", "created_at", "requirement", "scene", "interaction_mode", "depth", "query_variants", "platforms", "router_path", "executed_leaf_skills", "final_leaf_skills", "source_coverage", "stop_reason", "status"],
   "properties": {
     "route_id": {"type": "string", "minLength": 1},
     "created_at": {"type": "string", "format": "date-time"},
@@ -13,7 +13,7 @@
     "scene": {"enum": ["bug-fix", "open-source", "academic", "community"]},
     "interaction_mode": {"enum": ["direct", "clarify"]},
     "depth": {"enum": ["light", "medium", "deep"]},
-    "query_variants": {"type": "array", "items": {"type": "string"}},
+    "query_variants": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
     "platforms": {"type": "array", "items": {"$ref": "#/$defs/platform"}},
     "router_path": {"type": "array", "items": {"$ref": "#/$defs/routeEvent"}},
     "executed_leaf_skills": {"type": "array", "items": {"type": "string"}},
@@ -51,7 +51,7 @@
         "agent_id": {"type": "string"},
         "tier": {"type": "integer", "minimum": 1, "maximum": 3},
         "depth": {"enum": ["light", "medium", "deep"]},
-        "queries": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "queries": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
         "skill_order": {"type": "array", "items": {"type": "string"}},
         "status": {"type": "string"},
         "scripts": {"type": "array", "items": {"type": "string"}},
@@ -141,5 +141,30 @@
         "note": {"type": "string"}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"interaction_mode": {"const": "direct"}}},
+      "then": {
+        "properties": {
+          "requirement": {
+            "properties": {
+              "target": {"minLength": 1, "pattern": "\\S"},
+              "goal": {"minLength": 1, "pattern": "\\S"}
+            }
+          },
+          "query_variants": {"minItems": 1},
+          "platforms": {
+            "minItems": 1,
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/platform"},
+                {"required": ["queries"], "properties": {"queries": {"minItems": 1}}}
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }

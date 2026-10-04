@@ -108,6 +108,7 @@ def validate_route(value: dict) -> list[str]:
     required = [
         "route_id",
         "created_at",
+        "requirement",
         "scene",
         "interaction_mode",
         "depth",
@@ -133,16 +134,45 @@ def validate_route(value: dict) -> list[str]:
         errors.append(f"depth must be one of {sorted(DEPTHS)}")
     if value["status"] not in STATUSES:
         errors.append(f"status must be one of {sorted(STATUSES)}")
-    if "requirement" in value:
-        errors.extend(validate_requirement(value["requirement"]))
+    errors.extend(validate_requirement(value["requirement"]))
+    requirement = value["requirement"]
+    if isinstance(requirement, dict):
+        explicit_platforms = requirement.get("explicit_platforms")
+        if (
+            isinstance(explicit_platforms, list)
+            and explicit_platforms
+            and isinstance(value["platforms"], list)
+        ):
+            selected_ids = {
+                platform.get("platform_id")
+                for platform in value["platforms"]
+                if isinstance(platform, dict)
+            }
+            for platform_id in selected_ids:
+                if platform_id not in explicit_platforms:
+                    errors.append(
+                        f"selected platform {platform_id!r} is outside explicit platform scope {explicit_platforms!r}"
+                    )
     if not isinstance(value["query_variants"], list) or not all(
         isinstance(item, str) and item.strip() for item in value["query_variants"]
     ):
         errors.append("query_variants must be a list of non-empty strings")
+    if value["interaction_mode"] == "direct":
+        requirement_value = value["requirement"]
+        target = requirement_value.get("target") if isinstance(requirement_value, dict) else None
+        goal = requirement_value.get("goal") if isinstance(requirement_value, dict) else None
+        if not isinstance(target, str) or not target.strip():
+            errors.append("direct routes require a non-empty requirement.target")
+        if not isinstance(goal, str) or not goal.strip():
+            errors.append("direct routes require a non-empty requirement.goal")
+        if isinstance(value["query_variants"], list) and not value["query_variants"]:
+            errors.append("direct routes require at least one query_variant")
     errors.extend(validate_router_path(value["router_path"]))
     if not isinstance(value["platforms"], list):
         errors.append("platforms must be a list")
     else:
+        if value["interaction_mode"] == "direct" and not value["platforms"]:
+            errors.append("direct routes require at least one platform")
         for index, platform in enumerate(value["platforms"]):
             if not isinstance(platform, dict):
                 errors.append(f"platforms[{index}] must be an object")
@@ -157,6 +187,10 @@ def validate_route(value: dict) -> list[str]:
                 or not all(isinstance(item, str) and item.strip() for item in platform["queries"])
             ):
                 errors.append(f"platforms[{index}].queries must be a list of non-empty strings")
+            if value["interaction_mode"] == "direct" and (
+                "queries" not in platform or not platform.get("queries")
+            ):
+                errors.append(f"platforms[{index}].queries must contain at least one query for direct routes")
             for key in ("scripts", "search_components"):
                 if key in platform and (
                     not isinstance(platform[key], list)

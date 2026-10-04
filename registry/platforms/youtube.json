@@ -4,11 +4,20 @@
   "aliases": ["youtube", "油管", "ytb"],
   "tier": 2,
   "route_skills": ["autocli"],
-  "scripts": [],
+  "scripts": ["scripts/probe_runtime.py"],
   "search_components": ["youtube-yt-dlp"],
   "adapter_type": "external-cli",
   "access_mode": "public-external-cli",
   "status": "router-registered",
+  "runtime": {
+    "executables": [
+      {"id": "yt-dlp", "commands": ["yt-dlp"], "probe_args": ["--version"]}
+    ],
+    "required_any": [
+      {"id": "javascript-runtime", "commands": ["deno", "node"]}
+    ],
+    "capabilities_require_live_test": ["search", "metadata", "subtitle"]
+  },
   "script_note": "Use yt-dlp when installed for search, metadata, and available subtitles; do not start transcription implicitly.",
   "capabilities": ["search", "metadata", "subtitle when available", "video detail"],
   "depth_routes": {

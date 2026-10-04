@@ -57,6 +57,85 @@ class RoutePlanTests(unittest.TestCase):
         with self.assertRaises(MODULE.PlanError):
             MODULE.canonicalize_platform("bug")
 
+    def test_explicit_platform_scope_accepts_alias_and_canonical_id(self):
+        plan = agent_plan(platform_id="YouTube")
+        plan["requirement"]["explicit_platforms"] = ["油管"]
+        self.assertEqual(MODULE.resolve_route_plan(plan)["platforms"][0]["platform_id"], "youtube")
+
+    def test_explicit_platform_scope_rejects_additional_platform(self):
+        plan = agent_plan()
+        plan["platforms"].append({"platform_id": "github", "queries": ["Claude Code source"]})
+        with self.assertRaisesRegex(MODULE.PlanError, "github.*outside explicit platform scope.*youtube"):
+            MODULE.resolve_route_plan(plan)
+
+    def test_multiple_explicit_platforms_accept_aliases(self):
+        plan = agent_plan()
+        plan["requirement"]["explicit_platforms"] = ["github", "推特"]
+        plan["platforms"] = [
+            {"platform_id": "GitHub", "queries": ["Claude Code repository"]},
+            {"platform_id": "twitter-x", "queries": ["Claude Code developer discussion"]},
+        ]
+        resolved = MODULE.resolve_route_plan(plan)
+        self.assertEqual(
+            [row["platform_id"] for row in resolved["platforms"]],
+            ["github", "twitter-x"],
+        )
+
+    def test_direct_route_requires_base_query(self):
+        for queries in ([], [""]):
+            plan = agent_plan()
+            plan["query_variants"] = queries
+            with self.subTest(queries=queries), self.assertRaises(MODULE.PlanError):
+                MODULE.resolve_route_plan(plan)
+
+    def test_direct_route_requires_platform_specific_query(self):
+        for queries in ([], ["   "]):
+            plan = agent_plan()
+            plan["platforms"][0]["queries"] = queries
+            with self.subTest(queries=queries), self.assertRaises(MODULE.PlanError):
+                MODULE.resolve_route_plan(plan)
+
+    def test_direct_route_requires_selected_platform(self):
+        plan = agent_plan()
+        plan["platforms"] = []
+        with self.assertRaisesRegex(MODULE.PlanError, "at least one selected platform"):
+            MODULE.resolve_route_plan(plan)
+
+    def test_direct_route_requires_non_empty_target_and_goal(self):
+        for field in ("target", "goal"):
+            plan = agent_plan()
+            plan["requirement"][field] = "  "
+            with self.subTest(field=field), self.assertRaisesRegex(MODULE.PlanError, field):
+                MODULE.resolve_route_plan(plan)
+
+    def test_clarify_route_can_defer_queries_and_platform_selection(self):
+        plan = agent_plan()
+        plan["interaction_mode"] = "clarify"
+        plan["requirement"]["target"] = ""
+        plan["requirement"]["goal"] = ""
+        plan["query_variants"] = []
+        plan["platforms"] = []
+        resolved = MODULE.resolve_route_plan(plan)
+        self.assertEqual(resolved["query_variants"], [])
+        self.assertEqual(resolved["platforms"], [])
+
+    def test_clarify_route_still_enforces_explicit_platform_scope(self):
+        plan = agent_plan()
+        plan["interaction_mode"] = "clarify"
+        plan["query_variants"] = []
+        plan["platforms"] = [{"platform_id": "github", "queries": []}]
+        with self.assertRaisesRegex(MODULE.PlanError, "github.*outside explicit platform scope.*youtube"):
+            MODULE.resolve_route_plan(plan)
+
+    def test_clarify_route_can_canonicalize_selected_platform_without_queries(self):
+        plan = agent_plan()
+        plan["interaction_mode"] = "clarify"
+        plan["query_variants"] = []
+        plan["platforms"] = [{"platform_id": "YouTube", "queries": []}]
+        resolved = MODULE.resolve_route_plan(plan)
+        self.assertEqual(resolved["platforms"][0]["platform_id"], "youtube")
+        self.assertEqual(resolved["platforms"][0]["queries"], [])
+
     def test_registry_packet_preserves_agent_queries_without_truncation(self):
         queries = [f"semantic direction {index}" for index in range(37)]
         plan = agent_plan(queries=queries)
@@ -80,7 +159,7 @@ class RoutePlanTests(unittest.TestCase):
         )
         self.assertEqual(resolved["platforms"][0]["scripts"], ["scripts/fast_search.py"])
         self.assertEqual(resolved["platforms"][1]["scripts"], ["scripts/v2ex_public.py"])
-        self.assertEqual(resolved["platforms"][2]["scripts"], [])
+        self.assertEqual(resolved["platforms"][2]["scripts"], ["scripts/probe_runtime.py"])
 
     def test_unknown_platform_is_reported(self):
         plan = agent_plan(platform_id="unknown platform")
