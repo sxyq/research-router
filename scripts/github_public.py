@@ -425,7 +425,11 @@ def create_snapshot(
     except (GitHubError, ValueError, OSError) as exc:
         failures.append(str(exc))
         shutil.rmtree(snapshot_dir, ignore_errors=True)
-        status = "rate-limited" if API_BUDGET.get("remaining") == 0 else "unavailable"
+        status = (
+            "rate-limited"
+            if (isinstance(exc, GitHubError) and exc.status == "rate-limited") or API_BUDGET.get("remaining") == 0
+            else "unavailable"
+        )
         raise GitHubError("all snapshot methods failed: " + "; ".join(failures), status)
     details.update({
         "repository": slug,

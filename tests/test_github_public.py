@@ -294,6 +294,16 @@ class GitHubPublicTests(unittest.TestCase):
             self.assertEqual(result["retrieval_method"], "archive")
             self.assertTrue(any("shallow clone skipped" in failure for failure in result["failures"]))
 
+    def test_archive_rate_limit_remains_rate_limited_after_all_snapshot_methods_fail(self):
+        with tempfile.TemporaryDirectory() as temp_name, patch.object(MODULE.shutil, "which", return_value=None), patch.object(
+            MODULE.tempfile, "gettempdir", return_value=temp_name
+        ), patch.object(MODULE, "request_json", return_value={"default_branch": "main", "size": 1}), patch.object(
+            MODULE, "_archive_snapshot", side_effect=MODULE.GitHubError("archive HTTP 429", "rate-limited")
+        ):
+            with self.assertRaises(MODULE.GitHubError) as caught:
+                MODULE.create_snapshot("owner/project")
+        self.assertEqual(caught.exception.status, "rate-limited")
+
     def test_safe_archive_extracts_regular_files(self):
         payload = self.make_tar([("owner-project-main/README.md", b"# Project", tarfile.REGTYPE)])
         with tempfile.TemporaryDirectory() as temp_name:
