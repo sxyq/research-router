@@ -4,13 +4,14 @@
   "aliases": ["google scholar", "谷歌学术", "Google学术", "scholar"],
   "scenes": ["academic"],
   "tier": 1,
-  "route_skills": ["paper-research-router", "literature-evidence-audit"],
-  "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/extract_paper_brief.py"],
-  "search_components": ["google-scholar-html", "openalex-api", "arxiv-api", "crossref-api", "semantic-scholar-api", "trafilatura"],
-  "adapter_type": "local-script-and-academic-chain",
+  "route_skills": ["academic-local"],
+  "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/academic_public.py", "academic-evidence/scripts/extract_paper_brief.py"],
+  "search_components": ["google-scholar-html", "academic-public-evidence", "openalex-api", "arxiv-api", "crossref-api", "semantic-scholar-api", "trafilatura"],
+  "adapter_type": "bundled-academic-workflow",
   "access_mode": "public-html-and-public-metadata",
   "status": "router-registered-local",
-  "script_note": "Use fast_search.py --provider google-scholar for bounded public discovery without an API key. Enrich selected records with public metadata, then use paper-brief or full evidence.",
+  "optional_enhancements": ["paper-research-router", "literature-evidence-audit", "anysearch"],
+  "script_note": "Use fast_search.py --provider google-scholar for bounded public discovery, then academic_public.py for public metadata and accessible HTML evidence.",
   "capabilities": ["paper discovery", "title and author lookup", "year lookup", "citation and version lookup", "abstract snippet discovery", "PDF candidate discovery", "paper brief"],
   "retrieval_stages": {
     "discovery": "Find candidates and return title, author, year, citation/version counts, links, and snippet-only text.",
@@ -18,10 +19,10 @@
     "full-audit": "Only on explicit request, read the primary PDF or body for methods, results, limitations, and exact claims."
   },
   "depth_routes": {
-    "light": ["paper-research-router"],
-    "medium": ["paper-research-router", "literature-evidence-audit"],
-    "deep": ["paper-research-router", "literature-evidence-audit"]
+    "light": ["academic-local"],
+    "medium": ["academic-local"],
+    "deep": ["academic-local"]
   },
   "source_requirement": "Google Scholar snippets are discovery evidence only. Metadata enrichment, paper-brief, or primary paper evidence is required for claims beyond candidate discovery.",
-  "agent_rule": "One academic Agent owns Scholar discovery, metadata enrichment, selected-paper brief extraction, and any explicitly requested full evidence stage."
+  "agent_rule": "One academic Agent owns Scholar discovery, bundled metadata enrichment, selected-paper reading, and evidence interpretation."
 }

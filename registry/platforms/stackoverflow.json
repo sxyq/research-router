@@ -3,18 +3,19 @@
   "display_name": "Stack Overflow",
   "aliases": ["stackoverflow", "stack overflow"],
   "tier": 2,
-  "route_skills": ["autocli", "anysearch", "github-analyze"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["fast-search", "stackexchange-api", "trafilatura"],
-  "adapter_type": "external-skill-chain",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py"],
+  "search_components": ["fast-search", "stackexchange-api", "generic-public-site-discovery", "trafilatura"],
+  "adapter_type": "local-public-search-api",
   "access_mode": "public-read",
   "status": "router-registered",
-  "script_note": "Use fast_search.py for public question discovery; the selected Skill reads answers and GitHub Analyze handles repository-linked bugs.",
+  "optional_enhancements": ["autocli", "anysearch", "github-analyze"],
+  "script_note": "Use platform_discovery.py with the bundled Stack Exchange provider for public question discovery; read selected questions and answers, then use github-local for repository evidence when needed.",
   "capabilities": ["error messages", "API usage", "code patterns", "accepted answers"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli", "github-analyze"],
-    "deep": ["autocli", "github-analyze", "anysearch"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "For a repository-specific bug, use GitHub issues, commits, source, and tests as the primary evidence path."
 }

@@ -100,6 +100,17 @@ flowchart TD
 npx skills add sxyq/research-router --skill research-router
 ```
 
+下载安装后，默认研究链即可工作，无需另外安装 AutoCLI、GitHub Skills、AnySearch 或 sibling Academic Skills。核心默认能力包括 GitHub 公开源码研究、Academic 发现与公开论文内容读取、Bilibili、V2EX、Discourse、52pojie，以及按站点域名做公开网页发现。
+
+| 随仓库提供 | 可选增强 |
+| --- | --- |
+| GitHub API 搜索、README、树、选定源码、依赖/配置、测试、Issues、Releases、commits | `github-search`、`github-analyze`、`last30days-cn` |
+| OpenAlex、Crossref、arXiv、Google Scholar 发现；作者/venue/年份/摘要；公开 HTML 论文段落 | `anysearch`、`paper-research-router`、`literature-evidence-audit`；已有 `pypdf` 时可读取下载的 PDF |
+| Bilibili 搜索、V2EX 公开 API、Discourse 搜索、52pojie 公开读取、雪球公开端点 | AutoCLI 和其他平台专项 Skill 的额外详情 |
+| 其他登记站点的免 Key 域名限定公开网页发现 | DDGS、Exa 等可扩展发现范围；YouTube 的 `yt-dlp` 字幕/详情；X 的 CLI/session |
+
+核心脚本不自动安装软件、不登录平台、不读取浏览器 Cookie。公开视频字幕、账号可见页面、付费 API 和桌面应用内容继续由用户本机已有的可选运行环境提供。
+
 本地手动使用：
 
 ```bash
@@ -129,7 +140,7 @@ python3 scripts/update-skill.py --apply
 | `cooldown` | 距离上次查询不足七天，继续使用当前版本。 |
 | `up-to-date` | 已完成查询，当前版本已是最新。 |
 | `updated` | 已覆盖更新，Agent 需要重新读取 `SKILL.md` 和相关注册表。 |
-| `update-available` | 仅查询模式发现新版本，未写入文件。 |
+| `update-available` | 仅查询模式发现新版本；不覆盖受管文件，但会更新本地查询时间状态。 |
 | `unavailable` | 网络或 GitHub 暂时不可用，继续使用当前版本并报告限制。 |
 
 需要立即查询时运行：
@@ -151,6 +162,7 @@ research-router/
 │   ├── platforms.index.json         # 平台、场景和通用 Skill 索引
 │   ├── search-components.index.json # 平台与免 Key 搜索组件索引
 │   ├── skills.index.json            # Skill 总索引
+│   ├── platform-domains.json        # 公开网页发现的域名与原生 provider
 │   ├── platforms/*.json             # 平台能力和三档路由
 │   └── skills/*.json                # Skill 来源、能力和边界
 ├── references/                      # 按需读取的详细路由规则
@@ -163,11 +175,14 @@ research-router/
 │   └── summaries/                   # 评分汇总
 ├── tuning/                          # 本地调优建议和已采用策略
 ├── scripts/                         # 确定性搜索、校验、评估和经验记录脚本
-│   ├── route_plan.py                # Agent 计划的 Registry 解析和平台分发包补全
+│   ├── route_plan.py                # Agent 计划的 Registry 解析和分发包补全
 │   ├── fast_search.py               # 通用公开 discovery providers
+│   ├── github_public.py              # GitHub 公开 API 检索和选定源码读取
+│   ├── platform_discovery.py         # 域名限定的通用公开网页发现
 │   ├── bilibili_public.py           # B站公开搜索
 │   ├── v2ex_public.py               # V2EX公开 API读取
 │   ├── xueqiu_public.py             # 雪球公开 HTTP读取
+│   ├── academic-evidence/scripts/academic_public.py # 论文元数据和公开 HTML 证据
 │   ├── update-skill.py              # 每七天一次的官方版本查询和覆盖更新
 │   └── update-experience.py         # 从路线记录生成 Skill/平台经验
 └── tests/                           # 固定路由案例，不访问真实平台
@@ -177,38 +192,37 @@ research-router/
 
 入口 Skill 中直接保留当前已登记平台的快速索引；完整的平台级别、入口 Skill、脚本/适配器和上游候选目录见 [references/platform-index.md](references/platform-index.md)。当前分级为：一级 `github`、`academic`、`google-scholar`；二级包含 `52pojie`、`stackoverflow`、`linux-do`、`v2ex`、`discourse`、`youtube`、`twitter-x`；三级包含 Bilibili、Reddit、Xueqiu 和其他补充发现平台。52pojie 固定为二级。
 
-| 级别 | 平台或场景 | `light` | `medium` | `deep` |
+| 平台 | Bundled light | Bundled medium | Bundled deep | 可选增强 |
 | --- | --- | --- | --- | --- |
-| 3 | B站 | `bilibili-public` | `bilibili-public` + `autocli` | `bilibili-public` + `autocli` + `last30days-cn` |
-| 3 | 中国抖音 | 默认跳过，点名后启用 | `douyin-skills` | `douyin-skills` + `last30days-cn` |
-| 3 | TikTok | `autocli` | `autocli` | `autocli` |
-| 3 | 小红书 | `autocli` | `autocli` + `xiaohongshu-skills` | 三者按序执行 |
-| 2 | Linux.do | `autocli` | `autocli` | `autocli` |
-| 2 | V2EX | `v2ex-public` | `v2ex-public` + `autocli` | `v2ex-public` + `autocli` + `last30days-cn` |
-| 2 | Discourse 技术论坛 | `forum-search` | `forum-search` | `forum-search` |
-| 2 | YouTube | `autocli` / `yt-dlp` | `autocli` / `yt-dlp` | `autocli` / `yt-dlp` |
-| 2 | Twitter/X | `autocli` / external CLI | `autocli` / external CLI | `autocli` / external CLI |
-| 3 | 雪球 | `xueqiu-public` | `xueqiu-public` | `xueqiu-public` |
-| 1 | GitHub | `github-search` | `github-search` → `github-analyze` | 上述两项 + `last30days-cn` |
-| 2 | 吾爱破解 / 52pojie.cn | `52pojie-research` | `52pojie-research`：列表/RSS → 选定帖子 | `52pojie-research`：热门、分页帖子与回帖 |
-| 1 | 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
-| 1 | Google Scholar | `paper-research-router` | `paper-research-router` + `literature-evidence-audit`（paper-brief） | 同上，明确要求后才进入全文证据 |
+| GitHub | `github-local`: repo + README | 再读树、选定源码/配置/测试、Issues/Releases | 扩展到多组文件与近期 commits | `github-search`、`github-analyze`、`last30days-cn` |
+| Academic / Google Scholar | `academic-local`: 公共文献发现 | 补作者、venue、日期、摘要与选定来源 | 加入公开 HTML 正文段落和跨来源核对 | `anysearch`、`paper-research-router`、`literature-evidence-audit` |
+| Bilibili | `bilibili-public` 搜索 | 同一本地公开视频发现 | 更广查询与候选核对 | AutoCLI/last30days-cn；视频详情和字幕另需运行环境 |
+| V2EX | `v2ex-public` | 同一本地公开 API，按需读取帖子/回复 | 增加查询和主题覆盖 | AutoCLI、last30days-cn |
+| Discourse / Linux.do | `forum-search` 或已登记 endpoint | 搜索并读取选中主题 | 增加主题与回复范围 | 登录内容仍需可用账号会话 |
+| 52pojie | `52pojie-research` | 扩大公开主题与 RSS 范围 | 读取相关公开回帖 | 无需额外 Skill |
+| 其他登记站点 | `generic-platform-discovery` 域名限定发现 | 扩展互补查询和候选数 | 扩大站点覆盖 | AutoCLI、专项 Skill、DDGS 或 Exa |
+| YouTube / Twitter-X | `generic-platform-discovery` 公共 URL 候选 | 更广站点发现 | 仍限公开页面 | YouTube rich metadata/subtitles 用 yt-dlp；X 原生检索需 CLI/session |
 
-`qiaomu-smart-search` 与 AutoCLI/OpenCLI 属于重叠入口，当前不放入默认活动路由。需要切换候选时，先更新注册表并保留评分依据。
+外部 Skill 均由 `optional_enhancements` 字段单独列出；它们缺失时继续执行 bundled Skill 和本地脚本，不把该平台标为失败。
 
 ## 免 Key 快速搜索
 
 平台与搜索组件的完整对应关系见 [registry/search-components.index.json](registry/search-components.index.json) 和 [references/platform-index.md](references/platform-index.md)。本地脚本使用公开 HTTP 接口，不读取 API Key、Cookie 或登录态，并只返回紧凑的发现结果：
 
 ```bash
-python3 scripts/fast_search.py --provider github --query "skill router" --limit 5
+python3 scripts/github_public.py search --query "skill router" --limit 5
+python3 scripts/github_public.py repo --repo owner/name
+python3 scripts/github_public.py tree --repo owner/name
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider openalex --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "tool use token efficiency" --limit 5
 python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
+python3 academic-evidence/scripts/academic_public.py metadata --arxiv 2401.12345
+python3 academic-evidence/scripts/academic_public.py read --url https://arxiv.org/abs/2401.12345 --term "selected evidence concept"
+python3 scripts/platform_discovery.py --platform reddit --query "agent research workflow"
 ```
 
-当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`。Google Scholar 不需要 API Key，返回标题、作者、年份、引用/版本数量、PDF 候选和摘要片段；摘要片段只用于发现。Exa 登记为可选的 no-key MCP search component，但需要已有 MCP 配置，不属于本地脚本默认路径。结果的 `evidence_level` 默认是 `discovery`；只有选定来源被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
+`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`；GitHub 深度研究由 `github_public.py` 提供。OpenAlex 与 Crossref 返回作者、venue、DOI 等公开字段和可用摘要，arXiv 返回 Atom 摘要与 HTML/PDF URL。Google Scholar 返回公开结果片段，遇到挑战页即停止。`academic_public.py` 可按 DOI/arXiv ID 取 metadata，也能读取公开 HTML 正文并提取 Agent 指定的段落。Exa 是可选的 no-key MCP 组件，但仍要求已有 MCP 配置。
 
 建议的执行链是：
 
@@ -221,7 +235,7 @@ python3 scripts/fast_search.py --provider google-scholar --query "agentic search
   -> 证据状态与路线记录
 ```
 
-`ddgs`、SearXNG、Semantic Scholar、`trafilatura` 和 `readability-lxml` 已登记为可选免 Key 组件。它们的安装状态、公共实例、限流和返回质量需要在运行时分别确认。
+`platform_discovery.py` 为没有本地原生搜索 API 的登记站点提供 `site:domain` 公共网页发现，不需要 `ddgs`。这条能力用于找到公开候选链接，不等于平台原生搜索或登录内容读取。搜索服务可能拒绝或限流；脚本会返回 `partial`/`unavailable`。DDGS、SearXNG、Semantic Scholar、`trafilatura`、`readability-lxml` 和 Exa 都是可选增强项。
 
 学术查询统一按下面的阶段推进：
 
@@ -229,7 +243,7 @@ python3 scripts/fast_search.py --provider google-scholar --query "agentic search
 discovery -> selected papers -> paper-brief -> explicit full-audit
 ```
 
-先用 Scholar、OpenAlex、arXiv 或 Crossref 找候选；用户选定论文后，再补摘要、章节大纲和作者明确写出的贡献；只有用户明确要求方法、实验数值、局限或原文引用时，才读取全文证据。`academic-evidence/scripts/extract_paper_brief.py` 可从本地 PDF 生成中间结果。
+先用 Scholar、OpenAlex、arXiv 或 Crossref 找候选；选定论文后，通过 `academic_public.py` 取 metadata/摘要并读取公开 HTML 段落。arXiv HTML 可用时优先使用；出版方只提供 PDF 时，可用现有 PDF 脚本和环境中已安装的 `pypdf`，否则清楚说明缺口。不会自动安装 `pypdf`。`extract_paper_brief.py` 仍用于本地 PDF brief。
 
 详细调用方式见 [references/search-components.md](references/search-components.md)。
 
@@ -378,6 +392,17 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
 ```json
 {
   "route_id": "2026-09-05-open-source-001",
+  "created_at": "2026-09-05T12:00:00Z",
+  "requirement": {
+    "target": "research-router alternatives",
+    "goal": "compare open-source research routing implementations",
+    "capabilities": ["repository discovery", "source and test review"],
+    "context": [],
+    "constraints": ["open source"],
+    "evidence": ["README", "source", "tests", "Issues", "Releases"],
+    "time": [],
+    "explicit_platforms": ["github"]
+  },
   "scene": "open-source",
   "interaction_mode": "direct",
   "depth": "medium",
@@ -390,18 +415,17 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
   "router_path": [
     {"stage": "scene", "value": "open-source"},
     {"stage": "platform-selection", "platform_id": "github"},
-    {"stage": "agent-dispatch", "platform_id": "github", "skill_ids": ["github-search", "github-analyze"]},
+    {"stage": "agent-dispatch", "platform_id": "github", "skill_ids": ["github-local"]},
     {"stage": "stop", "value": "completed"}
   ],
   "platforms": [
-    {"platform_id": "github", "agent_id": "agent-github", "skill_order": ["github-search", "github-analyze"]}
+    {"platform_id": "github", "agent_id": "agent-github", "tier": 1, "depth": "medium", "queries": ["research-router alternatives source and tests"], "skill_order": ["github-local"], "scripts": ["scripts/github_public.py"], "search_components": ["github-public-rest"], "optional_enhancements": ["github-search", "github-analyze", "last30days-cn"]}
   ],
   "matched_skills": [
-    {"skill_id": "github-search", "reason": "按需求发现候选仓库"},
-    {"skill_id": "github-analyze", "reason": "核验源码、依赖和测试"}
+    {"skill_id": "github-local", "reason": "读取候选仓库、选定源码、配置和测试"}
   ],
-  "executed_leaf_skills": ["github-analyze"],
-  "final_leaf_skills": ["github-analyze"],
+  "executed_leaf_skills": ["github-local"],
+  "final_leaf_skills": ["github-local"],
   "source_coverage": {
     "status": "partial",
     "requested": ["repository source", "tests"],
@@ -412,6 +436,7 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
     "recency_score": 8
   },
   "stop_reason": "completed",
+  "status": "partial",
   "route_evaluation": {
     "problem_coverage": 8,
     "evidence_directness": 9,
@@ -477,4 +502,4 @@ Probe 只查询登记的可执行文件和安全的版本命令。它不发起�
 
 ## 状态
 
-这是一个可运行的 Skill 结构。第三方 Skill 的仓库存在和文档能力已经写入注册表；免 Key 搜索组件的公开接口、依赖和平台运行成功仍需在调用时单独验证。
+这是一个随仓库包含核心公开研究能力的 Skill。GitHub、Academic、Bilibili、V2EX、Discourse、52pojie 和泛站点公开候选发现都走 bundled 路径；外部 Skill、CLI、MCP 与账号会话仅扩展覆盖范围。公开接口和匿名额度会随服务状态变化，调用结果始终按实际 `status` 报告。

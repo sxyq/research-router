@@ -3,12 +3,13 @@
   "display_name": "YouTube",
   "aliases": ["youtube", "油管", "ytb"],
   "tier": 2,
-  "route_skills": ["autocli"],
-  "scripts": ["scripts/probe_runtime.py"],
-  "search_components": ["youtube-yt-dlp"],
-  "adapter_type": "external-cli",
-  "access_mode": "public-external-cli",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py", "scripts/probe_runtime.py"],
+  "search_components": ["generic-public-site-discovery", "youtube-yt-dlp"],
+  "adapter_type": "generic-site-discovery-plus-optional-cli",
+  "access_mode": "public-generic-discovery; rich-video-runtime-optional",
   "status": "router-registered",
+  "optional_enhancements": ["autocli"],
   "runtime": {
     "executables": [
       {"id": "yt-dlp", "commands": ["yt-dlp"], "probe_args": ["--version"]}
@@ -18,12 +19,12 @@
     ],
     "capabilities_require_live_test": ["search", "metadata", "subtitle"]
   },
-  "script_note": "Use yt-dlp when installed for search, metadata, and available subtitles; do not start transcription implicitly.",
+  "script_note": "Bundled generic discovery finds public video URLs; yt-dlp is optional for search, metadata, and available subtitles. Do not start transcription implicitly.",
   "capabilities": ["search", "metadata", "subtitle when available", "video detail"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli"],
-    "deep": ["autocli"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "The external runtime must be probed at use time. Missing subtitles are reported as missing evidence, not silently transcribed."
 }

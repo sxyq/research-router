@@ -175,6 +175,7 @@ def complete_dispatch_packet(
         "skill_order": list(skill_order),
         "scripts": list(entry.get("scripts", [])),
         "search_components": list(entry.get("search_components", [])),
+        "optional_enhancements": list(entry.get("optional_enhancements", [])),
         "adapter_type": entry.get("adapter_type"),
         "access_mode": entry.get("access_mode"),
         "depth_routes": routes if isinstance(routes, dict) else {},

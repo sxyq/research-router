@@ -7,11 +7,11 @@ metadata:
 
 # Academic Evidence Processing
 
-This is the post-discovery evidence stage of `research-router`. It does not search for papers or replace the academic discovery Skills. It receives candidate papers from the academic route and turns them into either a bounded paper brief or defensible claim-to-evidence records.
+This is the paper evidence workflow bundled with `research-router`. It supports the local academic route from discovery through selected-paper reading, and turns candidate papers into either a bounded paper brief or defensible claim-to-evidence records. The bundled `academic-local` entry uses public discovery and metadata scripts in this repository; optional external Skills may expand coverage.
 
 ## When the Router must call this module
 
-Call this module after paper discovery when the user asks for any of the following:
+Use this workflow when the user asks for any of the following:
 
 - a selected-paper brief with abstract, section outline, and author-stated contributions
 - original supporting text, claim verification, or citation audit

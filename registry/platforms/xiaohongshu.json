@@ -3,18 +3,19 @@
   "display_name": "小红书",
   "aliases": ["小红书", "xhs", "xiaohongshu"],
   "tier": 3,
-  "route_skills": ["autocli", "xiaohongshu-skills", "last30days-cn"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["ddgs"],
-  "adapter_type": "external-skill-chain",
-  "access_mode": "browser-session",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py"],
+  "search_components": ["generic-public-site-discovery", "ddgs"],
+  "adapter_type": "generic-site-discovery",
+  "access_mode": "public-candidate-search; detail-session-optional",
   "status": "router-registered",
-  "script_note": "The optional ddgs provider supplies public discovery only; note detail and comments remain with the selected external Skill.",
+  "optional_enhancements": ["autocli", "xiaohongshu-skills", "last30days-cn"],
+  "script_note": "Bundled domain-constrained discovery finds public candidate URLs; account-only details and comments are optional external capabilities.",
   "capabilities": ["note search", "feed", "detail", "comments", "interaction", "content data"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli", "xiaohongshu-skills"],
-    "deep": ["autocli", "xiaohongshu-skills", "last30days-cn"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "Use the specialist when detail, comments, interactions, or content data are required."
 }

@@ -19,4 +19,4 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
       - name: Compile scripts
-        run: python -m compileall -q scripts
+        run: python -m compileall -q scripts academic-evidence/scripts

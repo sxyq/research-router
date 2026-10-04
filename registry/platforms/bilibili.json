@@ -3,18 +3,19 @@
   "display_name": "B站",
   "aliases": ["b站", "哔哩哔哩", "bilibili"],
   "tier": 3,
-  "route_skills": ["bilibili-public", "autocli", "last30days-cn"],
+  "route_skills": ["bilibili-public"],
   "scripts": ["scripts/bilibili_public.py"],
   "search_components": ["bilibili-public-api"],
   "adapter_type": "local-public-search-plus-external-detail",
   "access_mode": "public-discovery-or-external-detail",
   "status": "router-registered",
-  "script_note": "The local script supplies public search only; video detail and subtitles remain external.",
+  "optional_enhancements": ["autocli", "last30days-cn"],
+  "script_note": "Bundled local script supplies public search; optional external tools may add video metadata and subtitles.",
   "capabilities": ["search", "hot", "video metadata", "subtitle when available"],
   "depth_routes": {
     "light": ["bilibili-public"],
-    "medium": ["bilibili-public", "autocli"],
-    "deep": ["bilibili-public", "autocli", "last30days-cn"]
+    "medium": ["bilibili-public"],
+    "deep": ["bilibili-public"]
   },
   "notes": "Recent-30-day discussion or heat requests may add last30days-cn."
 }

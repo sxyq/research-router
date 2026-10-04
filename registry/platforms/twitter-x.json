@@ -3,12 +3,13 @@
   "display_name": "Twitter / X",
   "aliases": ["twitter", "Twitter", "twitter/x", "Twitter/X", "推特", "x.com", "twitter.com"],
   "tier": 2,
-  "route_skills": ["autocli"],
-  "scripts": ["scripts/probe_runtime.py"],
-  "search_components": [],
-  "adapter_type": "external-cli",
-  "access_mode": "explicit-credentials-or-external-session",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py", "scripts/probe_runtime.py"],
+  "search_components": ["generic-public-site-discovery"],
+  "adapter_type": "generic-site-discovery-plus-optional-cli",
+  "access_mode": "public-generic-discovery; native-search-auth-optional",
   "status": "router-registered",
+  "optional_enhancements": ["autocli"],
   "runtime": {
     "executables": [
       {
@@ -26,12 +27,12 @@
     "capabilities_require_live_test": ["search", "post detail", "user timeline"],
     "session_policy": "Do not read browser cookies, run login commands, or start OpenCLI daemon during a runtime probe."
   },
-  "script_note": "Use a tested twitter-cli or OpenCLI route when available; do not read browser cookies implicitly.",
+  "script_note": "Bundled generic discovery finds public candidate URLs; native CLI/session is optional and must never read browser cookies implicitly.",
   "capabilities": ["search", "post detail", "long post", "user timeline", "recent discussion"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli"],
-    "deep": ["autocli"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "A bare x is not an alias. Contextual phrases such as X 上 or an explicit x.com URL may identify this platform."
 }

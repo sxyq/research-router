@@ -3,6 +3,7 @@
   "skills": [
     {
       "id": "autocli",
+      "availability": "optional-external",
       "display_name": "AutoCLI Skill",
       "role": "multi-platform discovery and content reading",
       "kind": "general-multi-platform",
@@ -16,7 +17,53 @@
       "status": "candidate-verified-source"
     },
     {
+      "id": "github-local",
+      "display_name": "Bundled GitHub Research",
+      "role": "Public repository discovery, README, tree, source, Issues, Releases, and commit metadata retrieval",
+      "kind": "bundled-platform-skill",
+      "source": "local:references/local/github-research/SKILL.md",
+      "availability": "bundled",
+      "load": "on-demand",
+      "platforms": ["github"],
+      "tier": 1,
+      "adapter_type": "local-script",
+      "scripts": ["scripts/github_public.py"],
+      "limits": ["Uses unauthenticated public GitHub REST API", "Agent performs source interpretation", "Public API rate limits apply"],
+      "status": "bundled"
+    },
+    {
+      "id": "academic-local",
+      "display_name": "Bundled Academic Research",
+      "role": "Public paper discovery, metadata, abstract, and selected public HTML evidence retrieval",
+      "kind": "bundled-academic-skill",
+      "source": "local:references/local/academic-research/SKILL.md",
+      "availability": "bundled",
+      "load": "on-demand",
+      "platforms": ["academic", "google-scholar"],
+      "tier": 1,
+      "adapter_type": "local-scripts-and-agent-workflow",
+      "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/academic_public.py", "academic-evidence/scripts/extract_paper_brief.py"],
+      "limits": ["Public endpoints may rate-limit", "PDF text extraction needs pypdf if used", "HTML and abstract availability varies by paper"],
+      "status": "bundled"
+    },
+    {
+      "id": "generic-platform-discovery",
+      "display_name": "Bundled Generic Platform Discovery",
+      "role": "Domain-constrained public web discovery for registered platforms without a bundled native search API",
+      "kind": "bundled-generic-discovery",
+      "source": "local:references/local/generic-platform-discovery/SKILL.md",
+      "availability": "bundled",
+      "load": "on-demand",
+      "platforms": ["bilibili", "douyin", "tiktok", "xiaohongshu", "linux-do", "v2ex", "github", "academic", "google-scholar", "stackoverflow", "52pojie", "discourse", "youtube", "twitter-x", "xueqiu", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "weibo", "douban", "weread", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
+      "router_platforms": ["douyin", "tiktok", "xiaohongshu", "linux-do", "stackoverflow", "youtube", "twitter-x", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "weibo", "douban", "weread", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
+      "adapter_type": "generic-site-discovery",
+      "scripts": ["scripts/platform_discovery.py"],
+      "limits": ["Public candidate discovery only", "Does not access authenticated or hidden platform content", "Search provider may block or rate-limit"],
+      "status": "bundled"
+    },
+    {
       "id": "bilibili-public",
+      "availability": "bundled",
       "display_name": "Bilibili Public Search",
       "role": "Bilibili public video search discovery",
       "kind": "local-platform-adapter",
@@ -31,6 +78,7 @@
     },
     {
       "id": "v2ex-public",
+      "availability": "bundled",
       "display_name": "V2EX Public API",
       "role": "V2EX hot, node, topic, reply, and user reads",
       "kind": "local-platform-adapter",
@@ -45,6 +93,7 @@
     },
     {
       "id": "xueqiu-public",
+      "availability": "bundled",
       "display_name": "Xueqiu Public API",
       "role": "Xueqiu stock search, quotes, hot posts, and hot stocks",
       "kind": "local-platform-adapter",
@@ -59,6 +108,7 @@
     },
     {
       "id": "douyin-skills",
+      "availability": "optional-external",
       "display_name": "Douyin Skills",
       "role": "Chinese Douyin exploration and public-content workflows",
       "kind": "platform-specialist",
@@ -69,6 +119,7 @@
     },
     {
       "id": "xiaohongshu-skills",
+      "availability": "optional-external",
       "display_name": "XiaohongshuSkills",
       "role": "Xiaohongshu detail, comments, interaction, and content data",
       "kind": "platform-specialist",
@@ -79,6 +130,7 @@
     },
     {
       "id": "github-search",
+      "availability": "optional-external",
       "display_name": "GitHub Search",
       "role": "repository discovery by use case, topic, or trend",
       "kind": "platform-specialist",
@@ -89,6 +141,7 @@
     },
     {
       "id": "github-analyze",
+      "availability": "optional-external",
       "display_name": "GitHub Analyze",
       "role": "repository tree, source, dependency, test, Issue, and Release analysis",
       "kind": "platform-specialist",
@@ -99,6 +152,7 @@
     },
     {
       "id": "last30days-cn",
+      "availability": "optional-external",
       "display_name": "Last30Days CN",
       "role": "recent Chinese-community heat and multi-platform discussion",
       "kind": "general-research-specialist",
@@ -109,6 +163,7 @@
     },
     {
       "id": "anysearch",
+      "availability": "optional-external",
       "display_name": "AnySearch",
       "role": "general, vertical, batch, and full-page search",
       "kind": "general-web-search",
@@ -119,6 +174,7 @@
     },
     {
       "id": "literature-evidence-audit",
+      "availability": "optional-external",
       "display_name": "Literature Evidence Audit",
       "role": "primary-paper PDF evidence verification",
       "kind": "academic-evidence",
@@ -129,6 +185,7 @@
     },
     {
       "id": "paper-research-router",
+      "availability": "optional-external",
       "display_name": "Paper Research Router",
       "role": "local academic workflow selection",
       "kind": "academic-router",
@@ -139,6 +196,7 @@
     },
     {
       "id": "52pojie-research",
+      "availability": "bundled",
       "display_name": "52pojie Research",
       "role": "public forum listing, RSS, thread reading, and local keyword filtering",
       "kind": "platform-specialist",
@@ -152,6 +210,7 @@
     },
     {
       "id": "forum-search",
+      "availability": "bundled",
       "display_name": "Discourse Forum Search",
       "role": "public Discourse community search and topic reading",
       "kind": "local-protocol-adapter",

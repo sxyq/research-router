@@ -191,7 +191,7 @@ def validate_route(value: dict) -> list[str]:
                 "queries" not in platform or not platform.get("queries")
             ):
                 errors.append(f"platforms[{index}].queries must contain at least one query for direct routes")
-            for key in ("scripts", "search_components"):
+            for key in ("scripts", "search_components", "optional_enhancements"):
                 if key in platform and (
                     not isinstance(platform[key], list)
                     or not all(isinstance(item, str) for item in platform[key])

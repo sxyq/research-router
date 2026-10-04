@@ -3,19 +3,20 @@
   "display_name": "GitHub",
   "aliases": ["github", "git hub"],
   "tier": 1,
-  "route_skills": ["github-search", "github-analyze", "last30days-cn"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["fast-search", "github-search-api", "trafilatura"],
-  "adapter_type": "external-skill-chain",
+  "route_skills": ["github-local"],
+  "scripts": ["scripts/github_public.py"],
+  "search_components": ["github-public-rest", "fast-search", "github-search-api", "trafilatura"],
+  "adapter_type": "bundled-public-research",
   "access_mode": "public-repository",
   "status": "router-registered",
-  "script_note": "Use fast_search.py for public repository discovery; GitHub Skills continue with tree and source analysis.",
+  "optional_enhancements": ["github-search", "github-analyze", "last30days-cn"],
+  "script_note": "Use github_public.py for repository search, metadata, README, tree, selected files, Issues, Releases, and commits; the Agent performs source analysis.",
   "capabilities": ["repository discovery", "README reading", "tree inspection", "source analysis", "dependencies", "tests", "Issues", "Releases"],
   "depth_routes": {
-    "light": ["github-search"],
-    "medium": ["github-search", "github-analyze"],
-    "deep": ["github-search", "github-analyze", "last30days-cn"]
+    "light": ["github-local"],
+    "medium": ["github-local"],
+    "deep": ["github-local"]
   },
-  "source_requirement": "A source-level or implementation claim requires github-analyze; title and README alone are insufficient.",
-  "agent_rule": "One GitHub Agent runs matched Skills in the listed order."
+  "source_requirement": "Source-level claims require reading selected repository files, tests, dependencies, and relevant project records; the Agent interprets fetched content.",
+  "agent_rule": "One GitHub Agent uses the bundled adapter at every depth and selects files according to the requested evidence depth."
 }

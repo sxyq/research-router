@@ -2,9 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Research Router Skill Entry",
   "type": "object",
-  "required": ["id", "display_name", "role", "kind", "source", "platforms", "status"],
+  "required": ["id", "availability", "display_name", "role", "kind", "source", "platforms", "status"],
   "properties": {
     "id": {"type": "string"},
+    "availability": {"enum": ["bundled", "optional-external", "runtime-external", "catalog-only"]},
     "display_name": {"type": "string"},
     "role": {"type": "string"},
     "kind": {"type": "string"},

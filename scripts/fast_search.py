@@ -245,16 +245,40 @@ def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
     for item in data.get("results", [])[: args.limit]:
         location = item.get("primary_location") or {}
         source = location.get("source") or {}
+        authors = [
+            (author.get("author") or {}).get("display_name", "")
+            for author in item.get("authorships", [])[:12]
+        ]
+        abstract_index = item.get("abstract_inverted_index") or {}
+        abstract = ""
+        if isinstance(abstract_index, dict):
+            indexed_words = sorted(
+                ((position, word) for word, positions in abstract_index.items() for position in positions),
+                key=lambda pair: pair[0],
+            )
+            abstract = " ".join(word for _, word in indexed_words)
+        best_location = item.get("best_oa_location") or location
+        best_source = (best_location.get("source") or {}) if isinstance(best_location, dict) else {}
         results.append(
             record(
                 item.get("title"),
                 location.get("landing_page_url") or item.get("doi") or item.get("id"),
-                f"authors={', '.join((author.get('author') or {}).get('display_name', '') for author in item.get('authorships', [])[:3])}; "
-                f"venue={source.get('display_name', '')}; cited_by={item.get('cited_by_count', 0)}",
+                f"authors={', '.join(authors[:3])}; venue={source.get('display_name', '')}; cited_by={item.get('cited_by_count', 0)}",
                 item.get("publication_date"),
                 "openalex",
                 args.query,
                 "OpenAlex works search",
+                {
+                    "authors": authors,
+                    "venue": source.get("display_name"),
+                    "doi": item.get("doi"),
+                    "abstract": clean_text(abstract, 1800),
+                    "open_access": (item.get("open_access") or {}).get("is_oa"),
+                    "pdf_url": best_location.get("pdf_url") if isinstance(best_location, dict) else None,
+                    "oa_landing_page": best_location.get("landing_page_url") if isinstance(best_location, dict) else None,
+                    "oa_repository": best_source.get("display_name"),
+                    "retrieval_stage": "discovery",
+                },
             )
         )
     return results
@@ -285,6 +309,17 @@ def search_crossref(args: argparse.Namespace) -> list[dict[str, object]]:
                 "crossref",
                 args.query,
                 "Crossref metadata search",
+                {
+                    "authors": [
+                        " ".join(part for part in (author.get("given"), author.get("family")) if part)
+                        for author in item.get("author", [])[:12]
+                    ],
+                    "venue": (item.get("container-title") or [""])[0],
+                    "doi": item.get("DOI"),
+                    "abstract": clean_text(item.get("abstract") or "", 1800),
+                    "type": item.get("type"),
+                    "retrieval_stage": "discovery",
+                },
             )
         )
     return results
@@ -316,6 +351,18 @@ def search_arxiv(args: argparse.Namespace) -> list[dict[str, object]]:
                 "arxiv",
                 args.query,
                 "arXiv Atom search",
+                {
+                    "authors": [
+                        child_node.text.strip()
+                        for child_node in entry.findall("{http://www.w3.org/2005/Atom}author/{http://www.w3.org/2005/Atom}name")
+                        if child_node.text
+                    ],
+                    "arxiv_id": child("id").rsplit("/", 1)[-1],
+                    "pdf_url": child("id").replace("/abs/", "/pdf/"),
+                    "html_url": "https://arxiv.org/html/" + child("id").rsplit("/", 1)[-1],
+                    "categories": [node.attrib.get("term") for node in entry.findall("{http://arxiv.org/schemas/atom}primary_category")],
+                    "retrieval_stage": "discovery",
+                },
             )
         )
     return results

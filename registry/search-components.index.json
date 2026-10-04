@@ -20,6 +20,42 @@
       "limits": ["Requires an available Exa MCP configuration", "Not a platform entry", "Use only after the selected platform and access conditions are known"]
     },
     {
+      "id": "github-public-rest",
+      "display_name": "Bundled GitHub Public REST Adapter",
+      "kind": "local-platform-adapter",
+      "source": "local:scripts/github_public.py",
+      "requires_api_key": false,
+      "status": "bundled",
+      "platforms": ["github"],
+      "providers": ["repository-search", "metadata", "readme", "tree", "file", "issues", "releases", "commits"],
+      "output": ["title", "url", "description", "metadata", "source", "tests", "dependencies", "issues", "releases", "commits"],
+      "limits": ["Anonymous GitHub API quotas apply", "Agent selects and interprets source files", "Private repositories are not accessible"]
+    },
+    {
+      "id": "academic-public-evidence",
+      "display_name": "Bundled Academic Public Metadata and HTML Reader",
+      "kind": "local-platform-adapter",
+      "source": "local:academic-evidence/scripts/academic_public.py",
+      "requires_api_key": false,
+      "status": "bundled",
+      "platforms": ["academic", "google-scholar"],
+      "providers": ["crossref-metadata", "arxiv-metadata", "public-html-paper-reading"],
+      "output": ["title", "authors", "venue", "published_at", "abstract", "headings", "selected_passages", "pdf_url"],
+      "limits": ["HTML full text only when the publisher or repository exposes it publicly", "PDF text extraction uses pypdf only if already installed"]
+    },
+    {
+      "id": "generic-public-site-discovery",
+      "display_name": "Bundled Domain-Constrained Public Web Discovery",
+      "kind": "local-generic-discovery",
+      "source": "local:scripts/platform_discovery.py",
+      "requires_api_key": false,
+      "status": "bundled-bounded",
+      "platforms": ["bilibili", "douyin", "tiktok", "xiaohongshu", "linux-do", "v2ex", "github", "academic", "google-scholar", "stackoverflow", "52pojie", "discourse", "youtube", "twitter-x", "xueqiu", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "weibo", "douban", "weread", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
+      "providers": ["public-site-constrained-search", "stackoverflow", "discourse"],
+      "output": ["title", "url", "excerpt", "published_at", "source", "platform_id", "evidence_level"],
+      "limits": ["Public candidate discovery only", "HTML search endpoint may block or rate-limit", "No authenticated or hidden content"]
+    },
+    {
       "id": "bilibili-public-api",
       "display_name": "Bilibili public video search API",
       "kind": "local-platform-adapter",

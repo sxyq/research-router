@@ -43,10 +43,16 @@ class RoutePlanTests(unittest.TestCase):
         self.assertEqual(plan["requirement"]["explicit_platforms"], ["youtube"])
         self.assertEqual(plan["platforms"][0]["platform_id"], "youtube")
         self.assertEqual(plan["platforms"][0]["tier"], 2)
-        self.assertEqual(plan["platforms"][0]["search_components"], ["youtube-yt-dlp"])
-        self.assertEqual(plan["platforms"][0]["adapter_type"], "external-cli")
-        self.assertEqual(plan["platforms"][0]["access_mode"], "public-external-cli")
-        self.assertEqual(plan["platforms"][0]["skill_order"], ["autocli"])
+        self.assertEqual(
+            plan["platforms"][0]["search_components"],
+            ["generic-public-site-discovery", "youtube-yt-dlp"],
+        )
+        self.assertEqual(plan["platforms"][0]["adapter_type"], "generic-site-discovery-plus-optional-cli")
+        self.assertEqual(
+            plan["platforms"][0]["access_mode"],
+            "public-generic-discovery; rich-video-runtime-optional",
+        )
+        self.assertEqual(plan["platforms"][0]["skill_order"], ["generic-platform-discovery"])
 
     def test_platform_alias_normalization_is_exact_and_bare_x_is_rejected(self):
         self.assertEqual(MODULE.canonicalize_platform("推特"), "twitter-x")
@@ -157,9 +163,12 @@ class RoutePlanTests(unittest.TestCase):
             [item["platform_id"] for item in resolved["platforms"]],
             ["github", "v2ex", "twitter-x"],
         )
-        self.assertEqual(resolved["platforms"][0]["scripts"], ["scripts/fast_search.py"])
+        self.assertEqual(resolved["platforms"][0]["scripts"], ["scripts/github_public.py"])
         self.assertEqual(resolved["platforms"][1]["scripts"], ["scripts/v2ex_public.py"])
-        self.assertEqual(resolved["platforms"][2]["scripts"], ["scripts/probe_runtime.py"])
+        self.assertEqual(
+            resolved["platforms"][2]["scripts"],
+            ["scripts/platform_discovery.py", "scripts/probe_runtime.py"],
+        )
 
     def test_unknown_platform_is_reported(self):
         plan = agent_plan(platform_id="unknown platform")

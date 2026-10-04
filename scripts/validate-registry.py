@@ -28,10 +28,13 @@ CATALOG_FIELDS = (
     "tier",
     "route_skills",
     "scripts",
+    "search_components",
     "adapter_type",
     "access_mode",
     "status",
+    "optional_enhancements",
 )
+SKILL_AVAILABILITY = {"bundled", "optional-external", "runtime-external", "catalog-only"}
 
 
 def read_json(path: Path) -> Any:
@@ -89,6 +92,10 @@ def main() -> int:
             errors.append(f"{label}: route_skills must be a list")
         if not isinstance(entry.get("scripts"), list):
             errors.append(f"{label}: scripts must be a list")
+        if not isinstance(entry.get("search_components"), list):
+            errors.append(f"{label}: search_components must be a list")
+        if not isinstance(entry.get("optional_enhancements"), list):
+            errors.append(f"{label}: optional_enhancements must be a list")
 
     all_platform_ids = active_platform_ids | catalog_ids
     small_forum_ids = {
@@ -118,6 +125,11 @@ def main() -> int:
                 errors.append(f"{label}: unknown platform {platform_id!r}")
     skill_ids = {
         item.get("id")
+        for item in skills_index
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    skills_by_id = {
+        item.get("id"): item
         for item in skills_index
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
@@ -176,9 +188,22 @@ def main() -> int:
             for skill_id in route_skills:
                 if skill_id not in skill_ids:
                     errors.append(f"{label}: unknown Skill {skill_id!r}")
+                elif skills_by_id[skill_id].get("availability") != "bundled":
+                    errors.append(f"{label}: default route Skill {skill_id!r} is not bundled")
+        for skill_id in entry.get("optional_enhancements", []):
+            skill = skills_by_id.get(skill_id)
+            if skill is None:
+                errors.append(f"{label}: unknown optional enhancement {skill_id!r}")
+            elif skill.get("availability") not in {"optional-external", "runtime-external"}:
+                errors.append(f"{label}: enhancement {skill_id!r} must be external and optional")
         scripts = entry.get("scripts")
-        if isinstance(scripts, list) and scripts:
-            errors.append(f"{label}: catalog-only entries cannot claim local script paths")
+        if isinstance(scripts, list):
+            for script in scripts:
+                if not isinstance(script, str) or Path(script).is_absolute() or not (root / script).is_file():
+                    errors.append(f"{label}: local discovery script does not exist: {script}")
+        for component_id in entry.get("search_components", []):
+            if component_id not in component_ids:
+                errors.append(f"{label}: unknown search component {component_id!r}")
 
     for path in sorted((registry / "platforms").glob("*.json")):
         try:
@@ -202,6 +227,19 @@ def main() -> int:
             for skill_id in route_skills:
                 if skill_id not in skill_ids:
                     errors.append(f"{path.name}: unknown route Skill {skill_id!r}")
+                elif skills_by_id[skill_id].get("availability") != "bundled":
+                    errors.append(f"{path.name}: default route Skill {skill_id!r} is not bundled")
+
+            optional_enhancements = data.get("optional_enhancements", [])
+            if not isinstance(optional_enhancements, list):
+                errors.append(f"{path.name}: optional_enhancements must be a list")
+            else:
+                for skill_id in optional_enhancements:
+                    skill = skills_by_id.get(skill_id)
+                    if skill is None:
+                        errors.append(f"{path.name}: unknown optional enhancement {skill_id!r}")
+                    elif skill.get("availability") not in {"optional-external", "runtime-external"}:
+                        errors.append(f"{path.name}: enhancement {skill_id!r} must be external and optional")
 
             routes = data.get("depth_routes")
             if not isinstance(routes, dict):
@@ -294,6 +332,16 @@ def main() -> int:
         if not isinstance(entry, dict):
             continue
         skill_id = entry.get("id", "<unknown>")
+        if entry.get("availability") not in SKILL_AVAILABILITY:
+            errors.append(f"Skill {skill_id!r}: availability must be one of {sorted(SKILL_AVAILABILITY)}")
+        if entry.get("availability") == "bundled":
+            scripts = entry.get("scripts", [])
+            if not isinstance(scripts, list) or not scripts:
+                errors.append(f"bundled Skill {skill_id!r}: scripts must identify bundled files")
+            else:
+                for script in scripts:
+                    if not isinstance(script, str) or Path(script).is_absolute() or not (root / script).is_file():
+                        errors.append(f"bundled Skill {skill_id!r}: missing local script {script!r}")
         platforms = entry.get("platforms", [])
         if not isinstance(platforms, list):
             errors.append(f"Skill {skill_id!r}: platforms must be a list")
@@ -301,6 +349,31 @@ def main() -> int:
         for platform_id in platforms:
             if platform_id not in all_platform_ids:
                 errors.append(f"Skill {skill_id!r}: unknown platform {platform_id!r}")
+
+    for generic_skills in platforms_index.get("general_skills", []):
+        if generic_skills not in skill_ids:
+            errors.append(f"platforms.index.json: unknown general Skill {generic_skills!r}")
+
+    try:
+        domains_registry = read_json(registry / "platform-domains.json")
+        domain_platforms = domains_registry.get("platforms", {}) if isinstance(domains_registry, dict) else {}
+        if not isinstance(domain_platforms, dict):
+            errors.append("platform-domains.json: platforms must be an object")
+        else:
+            if set(domain_platforms) != all_platform_ids:
+                errors.append("platform-domains.json: every active and catalog platform must have one discovery entry")
+            for platform_id, entry in domain_platforms.items():
+                if not isinstance(entry, dict) or not isinstance(entry.get("domains"), list):
+                    errors.append(f"platform-domains.json: invalid discovery entry for {platform_id!r}")
+                    continue
+                if not all(isinstance(domain, str) and domain and "/" not in domain for domain in entry["domains"]):
+                    errors.append(f"platform-domains.json: invalid domain for {platform_id!r}")
+                if not entry["domains"] and entry.get("native_provider") != "discourse":
+                    errors.append(f"platform-domains.json: empty domains need a registered native provider for {platform_id!r}")
+                if entry.get("native_provider") not in {None, "stackoverflow", "discourse", "hacker-news", "wikipedia"}:
+                    errors.append(f"platform-domains.json: unsupported native provider for {platform_id!r}")
+    except (OSError, UnicodeError, TypeError, json.JSONDecodeError) as exc:
+        errors.append(f"platform-domains.json: {exc}")
 
     if errors:
         for error in errors:

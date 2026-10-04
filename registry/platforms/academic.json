@@ -3,20 +3,21 @@
   "display_name": "论文与学术",
   "aliases": ["论文", "学术", "文献", "arxiv"],
   "tier": 1,
-  "route_skills": ["autocli", "anysearch", "paper-research-router", "literature-evidence-audit"],
-  "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/extract_paper_brief.py"],
-  "search_components": ["fast-search", "google-scholar-html", "openalex-api", "arxiv-api", "crossref-api", "semantic-scholar-api", "rss-atom", "trafilatura"],
-  "adapter_type": "external-skill-chain",
+  "route_skills": ["academic-local"],
+  "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/academic_public.py", "academic-evidence/scripts/extract_paper_brief.py"],
+  "search_components": ["fast-search", "academic-public-evidence", "google-scholar-html", "openalex-api", "arxiv-api", "crossref-api", "semantic-scholar-api", "rss-atom", "trafilatura"],
+  "adapter_type": "bundled-academic-workflow",
   "access_mode": "public-or-pdf",
   "status": "router-registered",
-  "script_note": "Use fast_search.py for public discovery metadata; the selected discovery or evidence Skill handles PDF and body evidence.",
+  "optional_enhancements": ["autocli", "anysearch", "paper-research-router", "literature-evidence-audit"],
+  "script_note": "Use bundled fast_search.py and academic_public.py for discovery, public metadata, abstracts, and accessible HTML body passages.",
   "capabilities": ["paper discovery", "author and venue lookup", "full-text retrieval", "citation evidence"],
   "retrieval_stages": ["discovery", "paper-brief", "full-audit"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["anysearch", "paper-research-router"],
-    "deep": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+    "light": ["academic-local"],
+    "medium": ["academic-local"],
+    "deep": ["academic-local"]
   },
   "source_requirement": "Discovery metadata and snippets locate papers; paper-brief and detailed claims require selected-paper sources, with the primary PDF or body for exact claims.",
-  "agent_rule": "One academic Agent runs discovery before evidence verification."
+  "agent_rule": "One academic Agent runs bundled discovery, selects papers, reads public metadata and available primary sources, and interprets evidence."
 }

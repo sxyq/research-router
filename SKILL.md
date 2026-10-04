@@ -9,6 +9,12 @@ metadata:
 
 Use this Skill as the independent entrypoint for internet research. The Agent decides what kind of query the user has, how much query expansion is justified, and which platforms are relevant; the Router resolves registered Skills and records which leaf Skill actually ran.
 
+## Fresh-install behavior
+
+The repository includes the default public research path: GitHub repository/source retrieval, Academic and Google Scholar discovery with public metadata/HTML reading, Bilibili search, V2EX public reads, Discourse search, 52pojie public reading, and domain-constrained public discovery for registered sites without a bundled native endpoint. These default paths use repository files, Python standard library, and public network endpoints. External Skills and CLIs listed under `optional_enhancements` can add coverage, but their absence does not invalidate a bundled route.
+
+YouTube rich metadata/subtitles, Twitter/X native search, authenticated pages, and desktop-only platforms can still require optional runtimes or an allowed session. Do not install packages, sign in, or read browser state automatically.
+
 ## Agent 与 Python 的职责边界
 
 需求理解属于当前 Agent 的语义工作。Agent 读取当前请求和本轮对话中直接相关的上下文，理解用户真正要解决的问题，再完成：
@@ -67,11 +73,11 @@ The script contacts the repository at most once every seven days. It stores only
    - `community`: find public discussions, practical reports, and experience-based evidence in forums.
 4. Choose `light`, `medium`, or `deep` from platform breadth, parallel platform Agents, source depth, and execution scope. Query count does not choose depth. User platform limits override default breadth.
 5. Generate a generous base query set from the requirement model through Agent reasoning, then rewrite it for each selected platform. Read [query-generation.md](references/query-generation.md). Never send the same unmodified query set to every platform.
-6. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Use `scripts/route_plan.py` only after the Agent has produced the structured plan. Load only the selected external Skill's `SKILL.md` and directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
-   The platform quick index is below; read [the full platform index](references/platform-index.md) when the request names a catalog-only platform or needs the adapter limits. Catalog-only rows record upstream coverage and require a runtime availability check before selection.
+6. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected platform entry and bundled Skill instructions. Use `scripts/route_plan.py` only after the Agent has produced the structured plan. Load an external Skill only when its files are already available and it adds needed coverage; its absence must leave the bundled route intact. Do not scan the local Skill collection and do not make MCP a required dependency.
+   The platform quick index is below; read [the full platform index](references/platform-index.md) when a request names a catalog-only platform or needs adapter limits. Catalog-only rows can use their registered bundled public-discovery route; probe a runtime only when choosing an optional external enhancement.
    For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes. For public API discovery, use `scripts/fast_search.py` and return compact JSON before selecting pages for reading.
-7. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
-8. Build one dispatch packet per selected platform. The Agent supplies the platform, goal, queries, evidence requirement, and stop condition. Registry resolution supplies the tier, Skill order, script paths, search components, adapter type, access mode, and depth routes.
+7. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a bundled general Skill when it reduces repeated work. Use an external general Skill only when it is already available and improves the selected route.
+8. Build one dispatch packet per selected platform. The Agent supplies the platform, goal, queries, evidence requirement, and stop condition. Registry resolution supplies the tier, bundled Skill order, script paths, search components, adapter type, access mode, depth routes, and optional enhancements. Missing optional enhancements must not mark the bundled platform route failed.
 9. If YouTube or Twitter/X was selected, run `scripts/probe_runtime.py` for only those selected platform IDs. This reads local executable state; it does not prove search worked. Do not probe at Router initialization, inspect browser cookies, run login commands, or start OpenCLI.
 10. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
 11. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
@@ -80,41 +86,43 @@ The script contacts the repository at most once every seven days. It stores only
 
 ## Platform quick index
 
-Use this table to map a platform to its entry Skill and script or adapter. `external` means the route is supplied by an installed third-party Skill or CLI. The local quick-search script only uses public endpoints and does not require an API key. Exa is an optional no-key MCP component, not a platform; it still needs an available Exa MCP configuration.
+Use this table to map a platform to its bundled entry Skill and script. External Skills, CLIs, or MCPs appear in `optional_enhancements` and can add coverage when already available; they are not required by the default route. Bundled discovery scripts use public endpoints and need no API key. Exa is an optional no-key MCP component, not a platform; it still needs an existing Exa MCP configuration.
 
 | Tier | Platform | Entry Skill(s) | Script or adapter |
 | --- | --- | --- | --- |
-| 1 | GitHub | `github-search` -> `github-analyze` | `scripts/fast_search.py --provider github`; source analysis remains external |
-| 1 | Academic | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local |
-| 1 | Google Scholar | `paper-research-router` -> `literature-evidence-audit` | `scripts/fast_search.py --provider google-scholar`; selected local PDFs use `academic-evidence/scripts/extract_paper_brief.py` |
+| 1 | GitHub | `github-local` | `scripts/github_public.py`; selected-file implementation analysis is performed by the Agent |
+| 1 | Academic | `academic-local` | `scripts/fast_search.py` + `academic-evidence/scripts/academic_public.py` |
+| 1 | Google Scholar | `academic-local` | `scripts/fast_search.py --provider google-scholar` + bundled metadata/HTML reader |
 | 2 | 52pojie / 吾爱破解 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` |
-| 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub |
-| 2 | Linux.do | `autocli` | `external` CLI; use the Discourse adapter only after endpoint verification |
-| 2 | V2EX | `v2ex-public`; medium/deep may add `autocli`; deep may add `last30days-cn` | `scripts/v2ex_public.py` |
+| 2 | Stack Overflow | `generic-platform-discovery` | `scripts/platform_discovery.py` uses the bundled Stack Exchange public search provider |
+| 2 | Linux.do | `generic-platform-discovery` | Bundled public Discourse search endpoint |
+| 2 | V2EX | `v2ex-public` | `scripts/v2ex_public.py`; AutoCLI and last30days-cn are optional |
 | 2 | Discourse technical forums | `forum-search` | `scripts/discourse_search.py` |
-| 2 | YouTube | `autocli` through external `yt-dlp` | External `yt-dlp`; verify it at runtime |
-| 2 | Twitter / X | `autocli` through a tested external CLI | External `twitter-cli` or OpenCLI |
-| 3 | Bilibili | `bilibili-public`; medium/deep may add `autocli`; deep may add `last30days-cn` | `scripts/bilibili_public.py`; detail remains external |
-| 3 | 中国抖音 | `douyin-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
-| 3 | TikTok | `autocli` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
-| 3 | 小红书 | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 2 | YouTube | `generic-platform-discovery` | Public URL discovery is bundled; `yt-dlp` is optional for metadata/subtitles |
+| 2 | Twitter / X | `generic-platform-discovery` | Public URL discovery is bundled; native CLI/session is optional |
+| 3 | Bilibili | `bilibili-public` | `scripts/bilibili_public.py`; AutoCLI/last30days-cn are optional |
+| 3 | 中国抖音 | `generic-platform-discovery` | Bundled public site discovery; detail Skills are optional |
+| 3 | TikTok | `generic-platform-discovery` | Bundled public site discovery; session features are optional |
+| 3 | 小红书 | `generic-platform-discovery` | Bundled public site discovery; detail Skills are optional |
 | 3 | 雪球 | `xueqiu-public` | `scripts/xueqiu_public.py` |
 
-The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, 微博, 豆瓣, 微信读书, BOSS 直聘, and desktop-app entries declared by AutoCLI. YouTube and Twitter/X have registered Router entries but still require their external runtime at use time. Discourse is a registered local protocol route; the selected forum base URL must still be supplied and verified.
+Other catalog platforms use the bundled `generic-platform-discovery` route for domain-constrained public candidate discovery. Their platform-native detail, account pages, and desktop actions remain optional. `registry/platform-domains.json` records the domains and any bundled native public provider.
 
 ## No-key quick search components
 
 The component-to-platform mapping is maintained in `registry/search-components.index.json`. Use `scripts/fast_search.py` for compact public discovery without credentials:
 
 ```bash
-python3 scripts/fast_search.py --provider github --query "skill router" --limit 5
+python3 scripts/github_public.py search --query "skill router" --limit 5
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider discourse --base-url https://users.rust-lang.org --query "webview bridge" --limit 5
 ```
 
-Supported public providers are GitHub, Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Google Scholar, Discourse, RSS/Atom, and optional `ddgs`. Results contain titles, URLs, short excerpts, dates, source identifiers, and `evidence_level: discovery`; they do not contain raw pages. Google Scholar also returns authors, citation/version counts, and a PDF candidate when exposed. Its result text is snippet-only.
+Supported public providers include Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Google Scholar, Discourse, RSS/Atom, and optional `ddgs`. GitHub source research uses `github_public.py`; results include repository metadata, README, tree, selected files, Issues, Releases, and commit metadata. Search results are discovery evidence until the Agent reads selected sources. Google Scholar may return snippets only.
+
+For registered platforms without a bundled native endpoint, `scripts/platform_discovery.py --platform <id> --query "..."` uses Bing RSS with a public DuckDuckGo HTML fallback, constrains the query to Registry domains, and filters links by those domains. It finds public candidate URLs only; it does not claim native APIs or account access.
 
 `ddgs`, SearXNG, Semantic Scholar, and content-extraction packages are registered as optional no-key candidates. Their availability, rate limits, or package installation must be confirmed at runtime. Paid or credentialed services are outside this default path.
 
@@ -149,7 +157,7 @@ Each platform Agent receives:
 - required evidence depth and the stop condition;
 - the expected return fields: `executed_skills`, source URLs, `source_coverage`, failures, and `stop_reason`.
 
-The main Agent keeps the `router_path` and evaluates the complete route after all platform reports return. A catalog-only platform can enter this flow only after its external Skill or CLI is available.
+The main Agent keeps the `router_path` and evaluates the complete route after all platform reports return. A catalog-only platform can use its registered bundled public-discovery route; native details may need an optional external runtime.
 
 ## Route-level evaluation
 
@@ -185,11 +193,11 @@ Read the relevant reference before applying details:
 
 ## Boundaries
 
-- Registry entries describe known routes and catalog-only external Skills; they do not prove that a third-party Skill is installed or currently runnable.
+- Registry entries describe bundled routes and optional external enhancements; they do not prove that an external Skill or runtime is installed or currently runnable.
 - Search components describe public access paths; they do not prove that a remote endpoint will remain available or that discovery snippets support a detailed claim.
 - Do not copy external Skills into this directory. Resolve an installed Skill by its canonical name/path, or report it unavailable and ask before installation.
 - Agent-Reach is a reference for platform capabilities, not a second Router. Absorb only useful adapters: Bilibili public search, V2EX public API reads, Xueqiu public endpoints, and external-tool mappings for YouTube and Twitter/X. Do not copy its global trigger rules or run its all-channel diagnosis as a routine route step.
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
 - The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
-- GitHub discovery can use `github-search`; a source-level request must continue to `github-analyze` and inspect README, tree, source, dependencies, tests, Issues, and Releases.
-- Academic discovery can use `autocli`, `anysearch`, or `fast_search.py --provider google-scholar`; a selected-paper brief may use `literature-evidence-audit` in `paper-brief` mode, while detailed claims must continue to the primary paper body or PDF.
+- GitHub routes use the bundled `github-local` Skill at all depths. Increase the read scope from repository overview/README to tree, selected source/config/test files, Issues, Releases, and commits according to the Agent's depth plan.
+- Academic routes use the bundled `academic-local` Skill at all depths. It combines public discovery, Crossref/arXiv metadata, and selected public HTML evidence. Use the existing PDF scripts when appropriate; `pypdf` is optional and is never installed automatically. `anysearch`, `paper-research-router`, and `literature-evidence-audit` are optional enhancements.

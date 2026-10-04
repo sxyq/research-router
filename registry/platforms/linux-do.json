@@ -3,18 +3,19 @@
   "display_name": "Linux.do",
   "aliases": ["linux.do", "linux do"],
   "tier": 2,
-  "route_skills": ["autocli"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["discourse-json", "ddgs"],
-  "adapter_type": "external-cli",
-  "access_mode": "public-or-browser",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py"],
+  "search_components": ["discourse-json", "generic-public-site-discovery", "ddgs"],
+  "adapter_type": "local-public-search-api",
+  "access_mode": "public-discourse-search",
   "status": "router-registered",
-  "script_note": "Use the optional ddgs provider for public discovery; verify a Discourse endpoint before using forum-search.",
+  "optional_enhancements": ["autocli"],
+  "script_note": "Uses the public Linux.do Discourse search endpoint; account-only content remains unavailable.",
   "capabilities": ["topic search", "hot", "latest", "category", "topic detail"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli"],
-    "deep": ["autocli"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "Use live help and login-state checks before relying on a browser-backed command."
 }

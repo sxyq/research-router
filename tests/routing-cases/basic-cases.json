@@ -6,7 +6,7 @@
       "scene": "open-source",
       "depth_at_least": "medium",
       "platforms_include": ["github"],
-      "skills_include": ["github-search", "github-analyze"],
+      "skills_include": ["github-local"],
       "query_terms": ["source", "implementation"]
     }
   },

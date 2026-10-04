@@ -3,18 +3,19 @@
   "display_name": "中国抖音",
   "aliases": ["抖音", "中国抖音", "douyin"],
   "tier": 3,
-  "route_skills": ["douyin-skills", "last30days-cn"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["ddgs"],
-  "adapter_type": "external-skill",
-  "access_mode": "browser-session",
+  "route_skills": ["generic-platform-discovery"],
+  "scripts": ["scripts/platform_discovery.py"],
+  "search_components": ["generic-public-site-discovery", "ddgs"],
+  "adapter_type": "generic-site-discovery",
+  "access_mode": "public-candidate-search; detail-session-optional",
   "status": "router-registered",
-  "script_note": "The optional ddgs provider supplies public discovery only; video detail remains with Douyin Skills.",
+  "optional_enhancements": ["douyin-skills", "last30days-cn", "autocli"],
+  "script_note": "Bundled platform_discovery.py returns public domain-matched candidate URLs; detail and account pages require optional platform access.",
   "capabilities": ["public video search", "trending topics", "public detail"],
   "depth_routes": {
-    "light": [],
-    "medium": ["douyin-skills"],
-    "deep": ["douyin-skills", "last30days-cn"]
+    "light": ["generic-platform-discovery"],
+    "medium": ["generic-platform-discovery"],
+    "deep": ["generic-platform-discovery"]
   },
   "notes": "Do not infer Chinese Douyin coverage from a TikTok adapter. Light mode skips this platform unless the user explicitly requests it."
 }
