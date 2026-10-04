@@ -42,13 +42,23 @@ Python 脚本和 Registry 只做确定性工作：平台别名归一、Registry 
 
 ## Skill update check
 
-The official project is [sxyq/research-router](https://github.com/sxyq/research-router). Do not run the updater automatically during a research route. For read-only Skill audits, local Skill inventory, and rules reviews, read the currently installed files and preserve the audit's read-only boundary. Use the updater only when the user asks for a source update and the repository state has been reviewed:
+The official project is [sxyq/research-router](https://github.com/sxyq/research-router).
+
+For an ordinary online research route, run the bundled updater once near the start, before platform execution:
 
 ```bash
-python3 scripts/update-skill.py --apply
+python3 scripts/update-skill.py --check-only
 ```
 
-The script contacts the repository at most once every seven days. It stores only a local check state, preserves `records/`, `tuning/`, and Git metadata, and updates the files managed by this Skill from the official repository. A `cooldown` result is normal; continue with the installed version. When the result is `updated`, reread this `SKILL.md` and the selected registry entries before routing the request. If the user explicitly asks for an immediate update, add `--force-check`.
+The updater itself enforces a seven-day cooldown, so most invocations return `cooldown` without contacting GitHub. Treat `cooldown`, `up-to-date`, and `unavailable` as non-blocking and continue with the installed version. If it returns `update-available`, give the user one concise notice that a newer official Research Router version is available, then continue the current task with the installed version unless the user explicitly asks to update.
+
+Never apply an update automatically. Do not run the automatic check when the user requested offline/no-network operation or when the task is a read-only audit of the installed Skill files. For an explicit update request, review the local repository/worktree state first and then run:
+
+```bash
+python3 scripts/update-skill.py --force-check --apply
+```
+
+The script stores only local update state, preserves `records/`, `tuning/`, and Git metadata, and replaces only files managed by this Skill. When the result is `updated`, reread this `SKILL.md` and the selected Registry entries before routing the request.
 
 ## Required order
 

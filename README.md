@@ -125,29 +125,39 @@ git clone https://github.com/sxyq/research-router.git "${CODEX_HOME:-$HOME/.code
 
 ## 自动更新
 
-项目地址是 [https://github.com/sxyq/research-router](https://github.com/sxyq/research-router)。不要在普通路由开始时自动运行更新脚本。只有用户要求同步官方源码，且工作树状态已经确认后，才运行：
+项目地址是 [https://github.com/sxyq/research-router](https://github.com/sxyq/research-router)。
+
+从 **v1.0.0** 起，普通在线研究任务在开始执行平台路线前会调用一次只读检查：
 
 ```bash
-python3 scripts/update-skill.py --apply
+python3 scripts/update-skill.py --check-only
 ```
 
-脚本最多每七天访问一次 GitHub。达到间隔后，它读取官方仓库的最新提交并下载公开归档包，覆盖 Skill 自身的规则、注册表、参考资料和脚本；`records/`、`tuning/`、`.git` 和更新时间状态会保留。脚本不会启动后台进程，也不会读取 API Key、Cookie 或登录态。
+脚本自身有七天 cooldown，因此不会每次都访问 GitHub。返回 `cooldown`、`up-to-date` 或 `unavailable` 时继续使用当前版本；只有返回 `update-available` 时，Agent 才提示“官方 Research Router 有新版本可用”。检查不会自动覆盖本地 Skill，也不会阻塞当前研究任务。
 
-常见返回状态如下：
-
-| 状态 | 含义 |
-| --- | --- |
-| `cooldown` | 距离上次查询不足七天，继续使用当前版本。 |
-| `up-to-date` | 已完成查询，当前版本已是最新。 |
-| `updated` | 已覆盖更新，Agent 需要重新读取 `SKILL.md` 和相关注册表。 |
-| `update-available` | 仅查询模式发现新版本；不覆盖受管文件，但会更新本地查询时间状态。 |
-| `unavailable` | 网络或 GitHub 暂时不可用，继续使用当前版本并报告限制。 |
-
-需要立即查询时运行：
+**不会自动安装更新。** 只有用户明确要求更新时，才在确认本地工作树状态后执行：
 
 ```bash
 python3 scripts/update-skill.py --force-check --apply
 ```
+
+如果任务明确要求离线/不联网，或只是对当前已安装 Skill 做只读审计，则跳过自动检查。
+
+脚本覆盖 Skill 自身的规则、注册表、参考资料和脚本，同时保留 `records/`、`tuning/`、`.git` 和本地更新时间状态；它不会启动后台进程，也不会读取 API Key、Cookie 或登录态。
+
+常见返回状态：
+
+| 状态 | 含义 |
+| --- | --- |
+| `cooldown` | 距离上次远程查询不足七天；继续使用当前版本。 |
+| `up-to-date` | 当前安装与官方版本一致。 |
+| `update-available` | 发现新版本；只提示，不写入受管文件。 |
+| `updated` | 用户明确要求后已完成覆盖更新；Agent 应重新读取 `SKILL.md` 和 Registry。 |
+| `unavailable` | GitHub 暂时不可用；继续使用当前版本并报告限制。 |
+
+通过 `npx skills add` 安装、目录中没有 Git 元数据的副本，会使用根目录 `VERSION` 做首次状态引导，避免刚安装最新版就被误报为“有更新”。
+
+> 重要：v1.0.0 之前已经安装的副本，其旧 `SKILL.md` 不会主动执行这个周期检查。它们需要**一次手动更新到 v1.0.0 或更高版本**；从那以后才会自动收到后续版本提示。
 
 更新脚本只处理官方仓库内容；它不执行下载文件中的命令。开发者如果在 Skill 目录直接修改了受管文件，应先保留自己的提交或明确要求覆盖更新。
 
@@ -155,6 +165,7 @@ python3 scripts/update-skill.py --force-check --apply
 
 ```text
 research-router/
+├── VERSION                          # 发布版本；用于无 Git 安装的首次更新状态引导
 ├── SKILL.md                         # Codex 入口规则
 ├── agents/openai.yaml               # Codex 显示信息与默认提示
 ├── registry/                        # 内置平台和 Skill 注册表

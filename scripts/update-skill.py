@@ -23,6 +23,8 @@ PROJECT_URL = "https://github.com/sxyq/research-router"
 PROJECT_GIT_URL = f"{PROJECT_URL}.git"
 PROJECT_API_URL = "https://api.github.com/repos/sxyq/research-router/commits/main"
 ARCHIVE_URL = f"{PROJECT_URL}/archive/refs/heads/main.tar.gz"
+VERSION_FILENAME = "VERSION"
+VERSION_URL = f"https://raw.githubusercontent.com/sxyq/research-router/main/{VERSION_FILENAME}"
 CHECK_INTERVAL_SECONDS = 7 * 24 * 60 * 60
 STATE_FILENAME = ".research-router-update-state.json"
 USER_AGENT = "research-router/update-skill 1.0"
@@ -115,6 +117,24 @@ def latest_remote_commit() -> str:
     if commit:
         return commit
     return remote_commit_from_api()
+
+
+def local_release_version(target: Path) -> str | None:
+    path = target / VERSION_FILENAME
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return value if value and len(value) <= 64 else None
+
+
+def remote_release_version() -> str:
+    request = Request(VERSION_URL, headers={"User-Agent": USER_AGENT, "Accept": "text/plain"})
+    with urlopen(request, timeout=30) as response:
+        value = response.read(128).decode("utf-8").strip()
+    if not value or len(value) > 64:
+        raise RuntimeError("GitHub did not return a valid Research Router release version")
+    return value
 
 
 def extract_archive(payload: bytes, destination: Path) -> Path:
@@ -219,19 +239,42 @@ def main() -> int:
 
     previous_commit = state.get("installed_commit") or current_git_commit(target)
     state["remote_commit"] = remote_commit
+
+    installed_version = local_release_version(target)
+    remote_version = None
+    if previous_commit is None and installed_version:
+        try:
+            remote_version = remote_release_version()
+        except (HTTPError, URLError, OSError, RuntimeError, UnicodeError):
+            remote_version = None
+        if remote_version == installed_version:
+            previous_commit = remote_commit
+            state["installed_commit"] = remote_commit
+            state["installed_version"] = installed_version
+            state["remote_version"] = remote_version
+
     if previous_commit == remote_commit:
         state["installed_commit"] = remote_commit
+        if installed_version:
+            state["installed_version"] = installed_version
+        if remote_version:
+            state["remote_version"] = remote_version
         state["last_result"] = "up-to-date"
         write_state(target, state)
         payload = base_payload(target, state)
-        payload.update({"status": "up-to-date", "remote_checked": True, "remote_commit": remote_commit})
+        payload.update({
+            "status": "up-to-date",
+            "remote_checked": True,
+            "remote_commit": remote_commit,
+            "installed_version": installed_version,
+        })
         return emit(payload)
 
     if args.check_only or not args.apply:
         state["last_result"] = "update-available"
         write_state(target, state)
         payload = base_payload(target, state)
-        payload.update({"status": "update-available", "remote_checked": True, "remote_commit": remote_commit, "installed_commit": previous_commit})
+        payload.update({"status": "update-available", "remote_checked": True, "remote_commit": remote_commit, "installed_commit": previous_commit, "installed_version": installed_version, "remote_version": remote_version})
         return emit(payload)
 
     try:
@@ -243,7 +286,7 @@ def main() -> int:
         payload.update({"status": "apply-failed", "remote_checked": True, "remote_commit": remote_commit, "reason": str(exc)})
         return emit(payload, 2)
 
-    state.update({"installed_commit": remote_commit, "last_result": "updated"})
+    state.update({"installed_commit": remote_commit, "installed_version": local_release_version(target), "last_result": "updated"})
     write_state(target, state)
     payload = base_payload(target, state)
     payload.update({"status": "updated", "remote_checked": True, "remote_commit": remote_commit, "previous_commit": previous_commit, "copied_files": copied, "preserved": sorted(PRESERVED_NAMES)})
