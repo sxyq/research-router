@@ -1,0 +1,20 @@
+{
+  "platform_id": "twitter-x",
+  "display_name": "Twitter / X",
+  "aliases": ["twitter", "Twitter", "twitter/x", "Twitter/X", "推特", "x.com", "twitter.com"],
+  "tier": 2,
+  "route_skills": ["autocli"],
+  "scripts": [],
+  "search_components": [],
+  "adapter_type": "external-cli",
+  "access_mode": "explicit-credentials-or-external-session",
+  "status": "router-registered",
+  "script_note": "Use a tested twitter-cli or OpenCLI route when available; do not read browser cookies implicitly.",
+  "capabilities": ["search", "post detail", "long post", "user timeline", "recent discussion"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "A bare x is not an alias. Contextual phrases such as X 上 or an explicit x.com URL may identify this platform."
+}

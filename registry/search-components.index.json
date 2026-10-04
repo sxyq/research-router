@@ -8,6 +8,54 @@
   },
   "components": [
     {
+      "id": "bilibili-public-api",
+      "display_name": "Bilibili public video search API",
+      "kind": "local-platform-adapter",
+      "source": "local:scripts/bilibili_public.py",
+      "requires_api_key": false,
+      "status": "local-included",
+      "platforms": ["bilibili"],
+      "providers": ["bilibili-public"],
+      "output": ["title", "url", "excerpt", "published_at", "author", "duration", "play_count"],
+      "limits": ["Discovery only", "Bilibili may return anti-abuse or unavailable responses", "Video detail and subtitles use a separate external route"]
+    },
+    {
+      "id": "v2ex-public-api",
+      "display_name": "V2EX public JSON API",
+      "kind": "local-platform-adapter",
+      "source": "local:scripts/v2ex_public.py",
+      "requires_api_key": false,
+      "status": "local-included",
+      "platforms": ["v2ex"],
+      "providers": ["v2ex-public"],
+      "output": ["topic", "reply", "user", "url", "excerpt", "created"],
+      "limits": ["Supports hot, node, topic, replies, and user endpoints", "No official full-text keyword search endpoint"]
+    },
+    {
+      "id": "xueqiu-public-api",
+      "display_name": "Xueqiu public HTTP endpoints",
+      "kind": "local-platform-adapter",
+      "source": "local:scripts/xueqiu_public.py",
+      "requires_api_key": false,
+      "status": "local-included",
+      "platforms": ["xueqiu"],
+      "providers": ["xueqiu-public"],
+      "output": ["symbol", "name", "quote", "post", "url", "rank"],
+      "limits": ["Public endpoints may require a session under current anti-abuse rules", "No browser cookies are read"]
+    },
+    {
+      "id": "youtube-yt-dlp",
+      "display_name": "yt-dlp YouTube adapter",
+      "kind": "external-cli",
+      "source": "https://github.com/yt-dlp/yt-dlp",
+      "requires_api_key": false,
+      "status": "optional-runtime",
+      "platforms": ["youtube"],
+      "providers": ["yt-dlp"],
+      "output": ["title", "url", "metadata", "subtitle"],
+      "limits": ["Requires yt-dlp at runtime", "Subtitle availability varies by video", "Transcription is an explicit extra step"]
+    },
+    {
       "id": "fast-search",
       "display_name": "Fast Search public adapters",
       "kind": "local-script",

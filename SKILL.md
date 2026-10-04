@@ -11,7 +11,7 @@ Use this Skill as the independent entrypoint for internet research. It decides w
 
 ## Skill update check
 
-The official project is [sxyq/research-router](https://github.com/sxyq/research-router). At the beginning of an invocation, before reading the registry, let the Agent run the bundled updater:
+The official project is [sxyq/research-router](https://github.com/sxyq/research-router). Do not run the updater automatically during a research route. For read-only Skill audits, local Skill inventory, and rules reviews, read the currently installed files and preserve the audit's read-only boundary. Use the updater only when the user asks for a source update and the repository state has been reviewed:
 
 ```bash
 python3 scripts/update-skill.py --apply
@@ -21,25 +21,35 @@ The script contacts the repository at most once every seven days. It stores only
 
 ## Required order
 
-1. Classify the scene before judging depth:
+1. Extract a requirement model before choosing a scene. Keep these slots when present:
+   - `target`: the object being researched;
+   - `goal`: the decision or answer the user needs;
+   - `capabilities`: capabilities that must be covered;
+   - `context`: versions, frameworks, environment, or use case;
+   - `constraints`: cost, license, language, access, or other limits;
+   - `evidence`: README, source, Issue, forum body, video metadata, paper body, or PDF;
+   - `time`: recency or date range;
+   - `explicit_platforms`: platforms named by the user.
+   Missing slots stay empty. Do not compress the request into one keyword.
+2. Choose one interaction mode:
+   - `direct`: the target and goal are usable; start with the supplied conditions and record any remaining evidence gap.
+   - `clarify`: ask one focused question only when a missing target, scope, or acceptance condition would change the route.
+3. Classify the main scene:
    - `bug-fix`: find solutions, issue discussions, patches, tests, and implementation details.
    - `open-source`: discover projects, Skills, plugins, tools, and community adoption.
    - `academic`: discover papers, authors, venues, and evidence from the paper body or PDF.
    - `community`: find public discussions, practical reports, and experience-based evidence in forums.
-2. Select one interaction mode:
-   - `direct`: do not ask requirement questions; use the conditions already supplied and start.
-   - `clarify`: ask one focused question at a time, update the requirement model, and continue until the target, scope, evidence, and acceptance condition are clear.
-3. Convert the requirement into several meaning-preserving query variants. Query variants must come from the user's goal, capability, constraints, platform terms, and evidence requirement. Do not generate random synonyms or rely on one title keyword.
-4. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Load only the selected external Skill's `SKILL.md` and its directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
+4. Choose `light`, `medium`, or `deep` from platform breadth, parallel platform Agents, source depth, and execution scope. Query count does not choose depth. User platform limits override default breadth.
+5. Generate a generous base query set from the requirement model, then rewrite it for each selected platform. Read [query-generation.md](references/query-generation.md). Never send the same unmodified query set to every platform.
+6. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Load only the selected external Skill's `SKILL.md` and directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
    The platform quick index is below; read [the full platform index](references/platform-index.md) when the request names a catalog-only platform or needs the adapter limits. Catalog-only rows record upstream coverage and require a runtime availability check before selection.
    For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes. For public API discovery, use `scripts/fast_search.py` and return compact JSON before selecting pages for reading.
-5. Select `light`, `medium`, or `deep` from query count, evidence depth, and parallel work. Platform count comes from the requirement and does not determine depth.
-6. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
-7. Build a dispatch packet for every selected platform. The packet includes the platform tier, user goal, platform-specific query variants, evidence requirement, depth, Skill order, script or adapter path, and the stop condition.
-8. Execute the selected Skills. One Agent owns one platform; if that platform has multiple Skills, that Agent runs them sequentially. `medium` and `deep` may run platform Agents in parallel. The main Agent merges their reports, removes duplicate sources, and reviews evidence.
-9. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
-10. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
-11. Return a concise result with the answer, actual source scope, final Skill path, evidence gaps, route evaluation, and the next action if one is required. When the user later provides a score, write a matching file under `records/feedback/YYYY-MM-DD/`.
+7. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
+8. Build one dispatch packet per selected platform. Include the platform tier, goal, platform-specific queries, evidence requirement, depth, Skill order, script or adapter path, access condition, and stop condition.
+9. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
+10. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
+11. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
+12. Return a concise result with the answer, actual source scope, final Skill path, evidence gaps, route evaluation, and the next action if one is required. When the user later provides a score, write a matching file under `records/feedback/YYYY-MM-DD/`.
 
 ## Platform quick index
 
@@ -53,14 +63,17 @@ Use this table to map a platform to its entry Skill and script or adapter. `exte
 | 2 | 52pojie / 吾爱破解 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` |
 | 2 | Stack Overflow | `autocli`, `anysearch`; optional `github-analyze` | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub |
 | 2 | Linux.do | `autocli` | `external` CLI; use the Discourse adapter only after endpoint verification |
-| 2 | V2EX | `autocli`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` is optional discovery; no local V2EX adapter |
+| 2 | V2EX | `v2ex-public`; medium/deep may add `autocli`; deep may add `last30days-cn` | `scripts/v2ex_public.py` |
 | 2 | Discourse technical forums | `forum-search` | `scripts/discourse_search.py` |
-| 3 | Bilibili | `autocli`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 2 | YouTube | `autocli` through external `yt-dlp` | External `yt-dlp`; verify it at runtime |
+| 2 | Twitter / X | `autocli` through a tested external CLI | External `twitter-cli` or OpenCLI |
+| 3 | Bilibili | `bilibili-public`; medium/deep may add `autocli`; deep may add `last30days-cn` | `scripts/bilibili_public.py`; detail remains external |
 | 3 | 中国抖音 | `douyin-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
 | 3 | TikTok | `autocli` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
 | 3 | 小红书 | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | `scripts/fast_search.py --provider ddgs` only for public discovery; detail remains external |
+| 3 | 雪球 | `xueqiu-public` | `scripts/xueqiu_public.py` |
 
-The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, YouTube, 微博, 豆瓣, 微信读书, 雪球, BOSS 直聘, Twitter/X, and desktop-app entries declared by AutoCLI. They remain catalog-only until their external runtime is available. Discourse is a registered local protocol route; the selected forum base URL must still be supplied and verified.
+The full index also records the additional Hacker News, Dev.to, Lobsters, Reddit, 知乎, 微博, 豆瓣, 微信读书, BOSS 直聘, and desktop-app entries declared by AutoCLI. YouTube and Twitter/X have registered Router entries but still require their external runtime at use time. Discourse is a registered local protocol route; the selected forum base URL must still be supplied and verified.
 
 ## No-key quick search components
 
@@ -104,7 +117,7 @@ user request
 Each platform Agent receives:
 
 - `platform_id`, tier, access scope, and selected adapter;
-- the user goal and only the query variants relevant to that platform;
+- the requirement model, user goal, and only the rewritten queries relevant to that platform;
 - the ordered Skill list and local script path when one exists;
 - required evidence depth and the stop condition;
 - the expected return fields: `executed_skills`, source URLs, `source_coverage`, failures, and `stop_reason`.
@@ -123,9 +136,13 @@ Experience is stored separately from `SKILL.md` so route-specific observations d
 
 ## Depth defaults
 
-- `light`: about 2–4 requirement-derived query variants; one Agent may use one multi-platform Skill. Add a specialist only for an explicit capability gap.
-- `medium`: about 5–10 variants; use one Agent per requested platform and the highest-ranked applicable Skill or sequential specialist supplement.
-- `deep`: 11 or more variants, or a request for source-level/full-text evidence; use parallel platform Agents and run each platform's matched Skills sequentially. Do not use a fixed budget as a reason to omit a required source check.
+Depth describes research breadth and evidence work. It is selected before query expansion and is never inferred from query count.
+
+- `light`: one main platform Agent, with a fallback only for a clear gap. Still generate roughly 12–16 useful base variants.
+- `medium`: two or three relevant platform Agents when the request allows it, with sequential Skills inside each platform. Generate roughly 16–24 useful base variants.
+- `deep`: three or more relevant platform Agents when the request allows it, parallel dispatch, source/full-text/comment-chain verification, and sequential platform adapters. Generate roughly 20–30 variants or more when the requirement needs them.
+
+An explicit platform scope always wins. A deep YouTube request remains YouTube-only and gains more queries, metadata, subtitles, and source reading rather than unrelated platforms.
 
 Read the relevant reference before applying details:
 
@@ -144,6 +161,7 @@ Read the relevant reference before applying details:
 - Registry entries describe known routes and catalog-only external Skills; they do not prove that a third-party Skill is installed or currently runnable.
 - Search components describe public access paths; they do not prove that a remote endpoint will remain available or that discovery snippets support a detailed claim.
 - Do not copy external Skills into this directory. Resolve an installed Skill by its canonical name/path, or report it unavailable and ask before installation.
+- Agent-Reach is a reference for platform capabilities, not a second Router. Absorb only useful adapters: Bilibili public search, V2EX public API reads, Xueqiu public endpoints, and external-tool mappings for YouTube and Twitter/X. Do not copy its global trigger rules or run its all-channel diagnosis as a routine route step.
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
 - The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
 - GitHub discovery can use `github-search`; a source-level request must continue to `github-analyze` and inspect README, tree, source, dependencies, tests, Issues, and Releases.

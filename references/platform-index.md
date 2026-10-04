@@ -1,111 +1,49 @@
 # Research Router Platform Index
 
-This index is the source for platform routing in this repository. `router-registered` entries have a platform JSON file and can be selected by the Router. `upstream-catalog-only` entries come from an external Skill's declared coverage; they are discovery records until the external Skill or CLI is available in the running environment.
+`registry/platforms.index.json` 是平台路由的机器可读事实源。`registry/platforms/<platform>.json` 保存每个平台的能力、Tier、入口 Skill、脚本、访问条件和三档 depth route；本文件只解释选择规则和容易混淆的边界。
 
-## Tier meaning
+## Tier
 
-| Tier | Use | Current examples |
+Tier 表示默认研究优先级，不代表允许/禁止，也不等同于运行可用性。用户明确指定平台时，直接使用该平台，并在结果中报告实际访问条件。
+
+| Tier | 默认用途 | 平台 |
 | --- | --- | --- |
-| 1 | Core source or primary implementation evidence | GitHub, academic, Google Scholar |
-| 2 | Technical communities and specialist public discussions | 52pojie, Stack Overflow, Linux.do, V2EX |
-| 3 | Supplemental discovery, media, social, finance, or desktop sources | Bilibili, Douyin, TikTok, Xiaohongshu |
+| 1 | 核心来源、论文和主要实现证据 | GitHub、Academic、Google Scholar |
+| 2 | 技术社区、公开讨论、视频和开发者讨论 | 52pojie、Stack Overflow、Linux.do、V2EX、Discourse、YouTube、Twitter/X，以及注册表中的同级平台 |
+| 3 | 补充性媒体、社交、财经和外部社区 | Bilibili、Douyin、TikTok、Xiaohongshu、Reddit、Xueqiu、LinkedIn、Facebook、Instagram、Boss 等 |
 
-The tier describes research priority and evidence strength. It does not prove that a platform is reachable in the current session.
+Exa 是通用 search component，不属于平台 Tier。
 
-## Router-registered platforms
+## 当前重要路由
 
-| Tier | Platform (`platform_id`) | Entry Skills | Script or adapter | Status and access scope |
-| --- | --- | --- | --- | --- |
-| 1 | GitHub (`github`) | `github-search` -> `github-analyze`; deep may add `last30days-cn` | `scripts/fast_search.py --provider github`; source analysis remains external | Public repositories. Source-level claims require tree, source, dependencies, tests, Issues, and Releases. |
-| 1 | Academic (`academic`) | `autocli`, `anysearch`, `paper-research-router`, `literature-evidence-audit` | `scripts/fast_search.py --provider openalex|arxiv|crossref`; PDF evidence remains external/local | Paper discovery and primary PDF/body evidence. |
-| 1 | Google Scholar (`google-scholar`) | `paper-research-router` -> `literature-evidence-audit` | `scripts/fast_search.py --provider google-scholar`; `academic-evidence/scripts/extract_paper_brief.py` for selected local PDFs | Public HTML discovery without a key. Results include title, author, year, citations, versions, PDF candidate, and snippet-only text. Enrich selected papers before evidence claims. |
-| 2 | 吾爱破解 (`52pojie`) | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` | Local public HTML/RSS/thread reader. No login, captcha, member pages, redirects, or attachments. |
-| 2 | Stack Overflow (`stackoverflow`) | `autocli`, `anysearch`; `github-analyze` only for a repository-linked bug | `scripts/fast_search.py --provider stackoverflow`; repository-linked bugs may continue to GitHub | Public questions, answers, and code patterns. |
-| 2 | Linux.do (`linux-do`) | `autocli` | External CLI; Discourse adapter is a candidate after endpoint verification | Public or browser-backed community content; login state can affect access. |
-| 2 | V2EX (`v2ex`) | `autocli`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs`; no local V2EX adapter | Topics, nodes, replies, and recent community discussion. |
-| 2 | Discourse 技术论坛 (`discourse`) | `forum-search` | `scripts/discourse_search.py` | Local read-only JSON adapter. Requires a public Discourse endpoint and a selected forum base URL. |
-| 3 | Bilibili (`bilibili`) | `autocli`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Search, hot lists, metadata, and subtitles when available. |
-| 3 | 中国抖音 (`douyin`) | `douyin-skills`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Public video and topic discovery. Explicit user request required for light routing. |
-| 3 | TikTok (`tiktok`) | `autocli` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Public video, profile, and engagement metadata. |
-| 3 | 小红书 (`xiaohongshu`) | `autocli`, `xiaohongshu-skills`; deep may add `last30days-cn` | Optional `scripts/fast_search.py --provider ddgs` for public discovery; detail remains external | Notes, details, comments, and content data when available. |
+| 平台 | Tier | 首选入口 | 本地脚本或外部能力 | 边界 |
+| --- | ---: | --- | --- | --- |
+| GitHub | 1 | `github-search` -> `github-analyze` | `scripts/fast_search.py --provider github` | 搜索结果只做发现；源码结论继续读取目录、源码、依赖、测试、Issue 和 Release |
+| Academic | 1 | `paper-research-router`、`literature-evidence-audit` | `fast_search.py` 的 OpenAlex、arXiv、Crossref | metadata/摘要不能替代论文正文或 PDF |
+| Google Scholar | 1 | `paper-research-router` -> `literature-evidence-audit` | `fast_search.py --provider google-scholar` | 公共 HTML 仅用于发现，摘要可能是片段 |
+| V2EX | 2 | `v2ex-public`，按需加 `autocli` | `scripts/v2ex_public.py` | hot、node、topic、replies、user；没有伪造的全文关键词 API |
+| YouTube | 2 | `autocli` | 外部 `yt-dlp` | search、metadata、可用字幕；转录是额外步骤 |
+| Twitter/X | 2 | `autocli` | 外部 `twitter-cli` 或 OpenCLI | 需要显式凭据或已允许的外部会话；不自动读取浏览器 Cookie |
+| 52pojie | 2 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` | 公开列表、RSS、主题和可读回帖 |
+| Discourse | 2 | `forum-search` | `scripts/discourse_search.py` | 需要具体论坛的公开 JSON 地址 |
+| Bilibili | 3 | `bilibili-public`，按需加 `autocli` | `scripts/bilibili_public.py` | 本地脚本只做公开搜索；详情和字幕由外部能力提供 |
+| Xueqiu | 3 | `xueqiu-public` | `scripts/xueqiu_public.py` | 股票搜索、行情、热帖、热股；当前接口可能需要公开会话 |
 
-The repository now has two kinds of local retrieval: platform readers (`52pojie-research` and `forum-search`) and the compact public API script (`scripts/fast_search.py`). Other rows still point to external Skills, browser sessions, or catalog-only adapters and must retain that limitation in the final result.
+## Agent-Reach 能力映射
 
-## Search component mapping
+Agent-Reach 只作为能力参考，不作为第二个 Router：
 
-The complete component registry is [registry/search-components.index.json](../registry/search-components.index.json). Every component in the default path has `requires_api_key: false`; optional packages and public instances remain runtime candidates.
+- Bilibili：吸收公开搜索 API 的入口；`bili-cli` 或 OpenCLI 的详情、字幕继续作为外部能力；
+- V2EX：吸收公开 API 的 hot、node、topic、replies、user 读取；关键词 discovery 继续使用通用搜索；
+- Xueqiu：吸收股票搜索、行情、热帖和热股的 HTTP 端点；不读取浏览器凭据；
+- YouTube：登记外部 `yt-dlp` 的 search、metadata、subtitle 能力；不默认启动转录；
+- Twitter/X、Reddit、LinkedIn、Facebook、Instagram、Boss：只登记外部 CLI/MCP 能力和访问边界，缺少运行条件时保持未验证；
+- Exa：登记为通用 search component，不新增平台入口。
 
-| Component | Platform mapping | Local entry | Output and evidence |
-| --- | --- | --- | --- |
-| `fast-search` | GitHub, Stack Overflow, Academic, Discourse, Hacker News, Dev.to, Wikipedia | `scripts/fast_search.py` | Compact JSON; `discovery` evidence |
-| `ddgs` | Video, social, Google and catalog-only web platforms | Optional provider in `scripts/fast_search.py` | Title, URL, excerpt; discovery only |
-| `github-search-api` | GitHub | `fast_search.py --provider github` | Repository candidates; source reading follows |
-| `stackexchange-api` | Stack Overflow | `fast_search.py --provider stackoverflow` | Questions and answer metadata |
-| `hn-algolia` | Hacker News | `fast_search.py --provider hacker-news` | Stories and comments |
-| `devto-api` | Dev.to | `fast_search.py --provider dev-to` | Tag-oriented article discovery |
-| `wikipedia-api` | Wikipedia | `fast_search.py --provider wikipedia` | Page candidates and snippets |
-| `openalex-api` | Academic | `fast_search.py --provider openalex` | Work metadata and citation counts |
-| `arxiv-api` | Academic | `fast_search.py --provider arxiv` | Preprint metadata and abstracts |
-| `crossref-api` | Academic | `fast_search.py --provider crossref` | DOI and publication metadata |
-| `google-scholar-html` | Google Scholar | `fast_search.py --provider google-scholar` | Candidate title, authors, year, citation/version counts, PDF candidate, and snippet-only text |
-| `discourse-json` | Rust, Kubernetes, Docker, NixOS, Home Assistant and verified Discourse sites | `scripts/discourse_search.py` | Topics, posts and replies |
-| `52pojie-public` | 52pojie | `references/local/52pojie-research/scripts/fetch.py` | Public listings, RSS and threads |
-| `rss-atom` | 52pojie, BBC, YouTube, Medium, Substack and academic feeds | `fast_search.py --provider rss` | Feed entries; discovery only |
-| `trafilatura` | Selected web pages after Top-K selection | Optional package | Clean正文; source reading |
-| `readability-lxml` | Selected web pages when primary extraction fails | Optional package | HTML article body; source reading |
+## 选择规则
 
-The component index also records SearXNG and Semantic Scholar as candidates. They remain optional because public SearXNG instances and no-key Semantic Scholar requests can vary in availability.
-
-## Academic staged retrieval
-
-The academic route is shared by `academic` and `google-scholar`:
-
-```text
-discovery -> selected papers -> paper-brief -> explicit full-audit
-```
-
-`discovery` finds candidates. `paper-brief` supplements the abstract and extracts a section outline and author-stated contributions. `full-audit` reads the primary PDF or body only when the user asks for detailed methods, results, limitations, or quotations.
-
-## Upstream AutoCLI catalog
-
-The AutoCLI Skill README explicitly lists the following additional platforms. They are recorded here so platform discovery does not lose the coverage of the child Skill. They are not active Router platform entries in this repository, and no local script path is assigned to them.
-
-| Tier | Platform (`platform_id`) | Entry Skill | Script or adapter | Status |
-| --- | --- | --- | --- | --- |
-| 2 | Hacker News (`hacker-news`) | `autocli` | External `autocli` CLI; use `autocli --help` for the installed command | Upstream catalog only; public mode |
-| 2 | Dev.to (`dev-to`) | `autocli` | External `autocli` CLI | Upstream catalog only; public mode |
-| 2 | Lobsters (`lobsters`) | `autocli` | External `autocli` CLI | Upstream catalog only; public mode |
-| 2 | Reddit (`reddit`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 2 | 知乎 (`zhihu`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 2 | Wikipedia (`wikipedia`) | `autocli` | External `autocli` CLI | Upstream catalog only; public mode |
-| 2 | BBC (`bbc`) | `autocli` | External `autocli` CLI | Upstream catalog only; public mode |
-| 3 | Twitter/X (`twitter-x`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | YouTube (`youtube`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | 微博 (`weibo`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | 豆瓣 (`douban`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | 微信读书 (`weread`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | 雪球 (`xueqiu`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | BOSS 直聘 (`boss-zhipin`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Facebook (`facebook`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Instagram (`instagram`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | 即刻 (`jike`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Google (`google`) | `autocli` | External `autocli` CLI; browser may be required for some commands | Upstream catalog only; public/browser mode |
-| 3 | Bloomberg (`bloomberg`) | `autocli` | External `autocli` CLI | Upstream catalog only; public/browser mode |
-| 3 | Medium (`medium`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Substack (`substack`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | LinkedIn (`linkedin`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Yahoo Finance (`yahoo-finance`) | `autocli` | External `autocli` CLI with browser session | Upstream catalog only; browser mode |
-| 3 | Cursor (`cursor`) | `autocli` | External `autocli` desktop command | Upstream catalog only; desktop mode |
-| 3 | Notion (`notion`) | `autocli` | External `autocli` desktop command | Upstream catalog only; desktop mode |
-| 3 | ChatGPT (`chatgpt`) | `autocli` | External `autocli` desktop command | Upstream catalog only; desktop mode |
-| 3 | Discord (`discord`) | `autocli` | External `autocli` desktop command | Upstream catalog only; desktop mode |
-| 3 | Codex (`codex`) | `autocli` | External `autocli` desktop command | Upstream catalog only; desktop mode |
-
-AutoCLI also advertises more sites without stable platform names in its README. Those unnamed sites are not fabricated into this registry. The README's `Arxiv` entry is normalized to the registered `academic` platform.
-
-## Selection rules
-
-1. Match a user-requested platform against the registered table first.
-2. For a catalog-only platform, verify that the named external Skill or CLI is installed and usable before selecting it.
-3. Never use an upstream catalog row as proof of current access, successful execution, or evidence quality.
-4. Keep the local `52pojie-research` script limited to public forum retrieval and cite the exact page URL for forum-derived claims.
+1. 先将用户平台名称映射到 `registry/aliases.json`；裸 `x` 不映射到 Twitter/X。
+2. 读取对应平台 JSON，再读取所需 Skill 和 component；不要把目录中的所有平台都加载进当前任务。
+3. 平台对象中的 `depth_routes` 决定入口 Skill 顺序；同一平台内顺序执行。
+4. `medium` 和 `deep` 可以并行不同平台的 Agent；一个平台只分配一个 Agent。
+5. 外部 CLI/MCP 缺失、未登录或未获授权时，保留路由计划并报告 `runtime unavailable`，不把静态登记当成执行成功。

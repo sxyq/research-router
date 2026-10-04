@@ -12,7 +12,10 @@
     "google-scholar",
     "stackoverflow",
     "52pojie",
-    "discourse"
+    "discourse",
+    "youtube",
+    "twitter-x",
+    "xueqiu"
   ],
   "scenes": [
     "bug-fix",
@@ -34,8 +37,8 @@
   },
   "platform_tiers": {
     "tier-1": ["github", "academic", "google-scholar"],
-    "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "discourse", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc"],
-    "tier-3": ["bilibili", "douyin", "tiktok", "xiaohongshu", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"]
+    "tier-2": ["52pojie", "stackoverflow", "linux-do", "v2ex", "discourse", "youtube", "twitter-x", "hacker-news", "dev-to", "lobsters", "zhihu", "wikipedia", "bbc"],
+    "tier-3": ["bilibili", "douyin", "tiktok", "xiaohongshu", "reddit", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"]
   },
   "catalog_only_platforms": [
     {
@@ -74,7 +77,7 @@
     {
       "platform_id": "reddit",
       "display_name": "Reddit",
-      "tier": 2,
+      "tier": 3,
       "route_skills": ["autocli"],
       "scripts": [],
       "adapter_type": "external-cli",
@@ -116,28 +119,6 @@
       "script_note": "Use the external autocli command after verifying it is installed."
     },
     {
-      "platform_id": "twitter-x",
-      "display_name": "Twitter / X",
-      "tier": 3,
-      "route_skills": ["autocli"],
-      "scripts": [],
-      "adapter_type": "external-cli",
-      "access_mode": "browser-session",
-      "status": "upstream-catalog-only",
-      "script_note": "Use the external autocli command with the required browser session."
-    },
-    {
-      "platform_id": "youtube",
-      "display_name": "YouTube",
-      "tier": 3,
-      "route_skills": ["autocli"],
-      "scripts": [],
-      "adapter_type": "external-cli",
-      "access_mode": "browser-session",
-      "status": "upstream-catalog-only",
-      "script_note": "Use the external autocli command with the required browser session."
-    },
-    {
       "platform_id": "weibo",
       "display_name": "微博",
       "tier": 3,
@@ -162,17 +143,6 @@
     {
       "platform_id": "weread",
       "display_name": "微信读书",
-      "tier": 3,
-      "route_skills": ["autocli"],
-      "scripts": [],
-      "adapter_type": "external-cli",
-      "access_mode": "browser-session",
-      "status": "upstream-catalog-only",
-      "script_note": "Use the external autocli command with the required browser session."
-    },
-    {
-      "platform_id": "xueqiu",
-      "display_name": "雪球",
       "tier": 3,
       "route_skills": ["autocli"],
       "scripts": [],

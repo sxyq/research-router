@@ -1,0 +1,20 @@
+{
+  "platform_id": "xueqiu",
+  "display_name": "雪球",
+  "aliases": ["雪球", "xueqiu"],
+  "tier": 3,
+  "route_skills": ["xueqiu-public"],
+  "scripts": ["scripts/xueqiu_public.py"],
+  "search_components": ["xueqiu-public-api"],
+  "adapter_type": "local-public-api",
+  "access_mode": "public-endpoint-may-require-session",
+  "status": "router-registered",
+  "script_note": "Use the local adapter for stock search, quotes, hot posts, and hot stocks; report current anti-abuse or session limits.",
+  "capabilities": ["search-stock", "quote", "hot-posts", "hot-stocks"],
+  "depth_routes": {
+    "light": ["xueqiu-public"],
+    "medium": ["xueqiu-public"],
+    "deep": ["xueqiu-public"]
+  },
+  "notes": "The adapter does not read browser cookies. A public endpoint response does not prove that every community page is accessible."
+}

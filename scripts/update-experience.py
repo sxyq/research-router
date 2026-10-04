@@ -84,7 +84,7 @@ def skill_platforms(rows: list[dict[str, Any]], skill_id: str) -> list[dict[str,
 
 
 def base_record(route: dict[str, Any], subject_type: str, subject_id: str) -> dict[str, Any]:
-    return {
+    record = {
         "experience_id": f"{route['route_id']}:{subject_type}:{subject_id}",
         "recorded_at": route.get("created_at"),
         "route_id": route["route_id"],
@@ -99,6 +99,9 @@ def base_record(route: dict[str, Any], subject_type: str, subject_id: str) -> di
         "failures": failure_list(route, subject_type, subject_id),
         "stop_reason": route.get("stop_reason", "unspecified"),
     }
+    if isinstance(route.get("requirement"), dict):
+        record["requirement"] = route["requirement"]
+    return record
 
 
 def build_records(route: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -135,6 +138,7 @@ def build_records(route: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dic
             "platform_ids": [platform_id],
             "skill_ids": skill_order,
             "skill_order": skill_order,
+            "platform_queries": [item for item in row.get("queries", []) if isinstance(item, str)],
         })
         platform_records.append(record)
     return skill_records, platform_records

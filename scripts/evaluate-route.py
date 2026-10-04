@@ -101,8 +101,13 @@ def build_evaluation(route: dict[str, Any], coverage: dict[str, Any], rows: list
     )
     cost = existing.get("execution_cost")
     cost = cost if isinstance(cost, dict) else {}
+    platform_query_count = sum(
+        len(row.get("queries", []))
+        for row in platforms
+        if isinstance(row, dict) and isinstance(row.get("queries"), list)
+    )
     execution_cost = {
-        "query_count": cost.get("query_count", len(route.get("query_variants", []))),
+        "query_count": cost.get("query_count", platform_query_count or len(route.get("query_variants", []))),
         "skill_calls": cost.get("skill_calls", skill_calls),
         "agent_count": cost.get("agent_count", agent_count),
         "duration_seconds": cost.get("duration_seconds"),

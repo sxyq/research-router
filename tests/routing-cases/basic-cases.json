@@ -1,34 +1,58 @@
 [
   {
-    "name": "light-open-source-multi-platform",
-    "scene": "open-source",
-    "depth": "light",
-    "expected": ["autocli"]
+    "name": "open-source-source-research",
+    "request": "帮我找几个类似 research-router 的开源 Skill，并查看实际源码实现",
+    "expected": {
+      "scene": "open-source",
+      "depth_at_least": "medium",
+      "platforms_include": ["github"],
+      "skills_include": ["github-search", "github-analyze"],
+      "query_terms": ["source", "implementation"]
+    }
   },
   {
-    "name": "medium-github-source-review",
-    "scene": "open-source",
-    "depth": "medium",
-    "expected": ["github-search", "github-analyze"]
+    "name": "youtube-workflow",
+    "request": "去 YouTube 找最近大家怎么用 Claude Code 做 research workflow",
+    "expected": {
+      "platforms": ["youtube"],
+      "tier": 2,
+      "query_terms": ["tutorial", "workflow", "demo"]
+    }
   },
   {
-    "name": "deep-paper-evidence",
-    "scene": "academic",
-    "depth": "deep",
-    "expected": ["anysearch", "paper-research-router", "literature-evidence-audit"]
+    "name": "twitter-community-review",
+    "request": "看看 Twitter/X 上开发者最近怎么评价这个项目",
+    "expected": {
+      "scene": "community",
+      "platforms": ["twitter-x"],
+      "tier": 2,
+      "query_terms": ["developer", "recent discussion", "review"]
+    }
   },
   {
-    "name": "medium-google-scholar-paper-brief",
-    "scene": "academic",
-    "depth": "medium",
-    "platform": "google-scholar",
-    "expected": ["paper-research-router", "literature-evidence-audit"]
+    "name": "deep-cross-platform-research",
+    "request": "跨平台深入研究一个开源研究工具的实现、教程和社区反馈，并保留独立来源",
+    "expected": {
+      "depth": "deep",
+      "minimum_platform_count": 3,
+      "minimum_query_count": 20,
+      "platform_queries_must_differ": true,
+      "evidence_terms": ["source", "forums", "video subtitles/metadata"]
+    }
   },
   {
-    "name": "medium-52pojie-community",
-    "scene": "community",
-    "depth": "medium",
-    "platform": "52pojie",
-    "expected": ["52pojie-research"]
+    "name": "deep-youtube-only",
+    "request": "只查 YouTube，深度分析这个工具最近的教程和评价",
+    "expected": {
+      "depth": "deep",
+      "platforms": ["youtube"],
+      "minimum_query_count": 20,
+      "no_extra_platforms": true
+    }
+  },
+  {
+    "name": "platform-aliases",
+    "requests": ["油管上的教程", "推特上的开发者反馈", "查看 x.com 上的讨论"],
+    "expected_platforms": ["youtube", "twitter-x", "twitter-x"]
   }
 ]

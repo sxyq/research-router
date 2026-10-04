@@ -12,12 +12,14 @@
     "subject_id": {"type": "string", "minLength": 1},
     "scene": {"enum": ["bug-fix", "open-source", "academic", "community"]},
     "depth": {"enum": ["light", "medium", "deep"]},
+    "requirement": {"$ref": "#/$defs/requirement"},
     "selected": {"type": "boolean"},
     "executed": {"type": "boolean"},
     "outcome": {"enum": ["planned", "running", "completed", "partial", "failed"]},
     "platform_ids": {"type": "array", "items": {"type": "string"}},
     "skill_ids": {"type": "array", "items": {"type": "string"}},
     "skill_order": {"type": "array", "items": {"type": "string"}},
+    "platform_queries": {"type": "array", "items": {"type": "string"}},
     "query_variants": {"type": "array", "items": {"type": "string"}},
     "source_coverage": {"$ref": "#/$defs/sourceCoverage"},
     "route_evaluation": {"$ref": "#/$defs/routeEvaluation"},
@@ -25,6 +27,20 @@
     "stop_reason": {"type": "string", "minLength": 1}
   },
   "$defs": {
+    "requirement": {
+      "type": "object",
+      "required": ["target", "goal", "capabilities", "context", "constraints", "evidence", "time", "explicit_platforms"],
+      "properties": {
+        "target": {"type": "string"},
+        "goal": {"type": "string"},
+        "capabilities": {"type": "array", "items": {"type": "string"}},
+        "context": {"type": "array", "items": {"type": "string"}},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "time": {"type": "array", "items": {"type": "string"}},
+        "explicit_platforms": {"type": "array", "items": {"type": "string"}}
+      }
+    },
     "sourceCoverage": {
       "type": "object",
       "required": ["status", "requested", "covered", "missing"],

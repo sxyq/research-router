@@ -33,41 +33,44 @@ Research Router 将这些决策固定成可阅读的注册表和参考规则。�
 
 ```mermaid
 flowchart LR
-    A[用户目标] --> B[场景]
-    B --> C[交互模式]
-    C --> D[需求模型]
-    D --> E[多组查询词]
-    E --> F[平台与 Skill]
-    F --> G[查询深度]
-    G --> H[Agent 执行]
-    H --> I[证据核验]
-    I --> J[叶子 Skill 路径与反馈]
+    A[用户原始请求] --> B[需求模型]
+    B --> C[direct / clarify]
+    C --> D[主 scene]
+    D --> E[Depth]
+    E --> F[Base query variants]
+    F --> G[平台选择]
+    G --> H[Platform-specific queries]
+    H --> I[脚本 / Skill / CLI / MCP]
+    I --> J[多平台 Agent 执行]
+    J --> K[原始来源与证据]
+    K --> L[去重、合并、实际 route]
 ```
 
 ## 设计原则
 
-1. 先识别查询场景，再选择查询深度。
-2. 查询深度由需求派生词数量、证据要求和并行程度决定；平台数量由用户需求决定。
-3. `light` 优先使用一个综合多平台 Skill；`medium` 按平台分配 Agent；`deep` 并行多个平台 Agent。
-4. 一个 Agent 负责一个平台。同一平台命中多个 Skill 时，由该 Agent 按顺序执行。
-5. Router 只按需加载叶子 Skill，不扫描全部本地 Skill，不要求 MCP 作为直接依赖。
-6. GitHub 的源码结论需要继续读取目录、源码、依赖、测试、Issue 和 Release；论文证据需要核对正文或 PDF。
-7. 每次路由记录实际执行到的最终子 Skill、来源覆盖、停止原因和路线评分；用户评分与 Router 评分、子 Skill 评分分别保存。
-8. 一个选定平台对应一个平台 Agent。平台 Agent 按入口索引中的 Skill 顺序执行，返回来源、失败、覆盖范围和停止原因，主 Agent 负责合并。
+1. 先提取 requirement model，再判断 direct / clarify、scene 和 depth。
+2. Depth 由平台范围、平台 Agent 数量、证据层级和执行范围决定；查询数量不决定 Depth。
+3. 每个请求先生成 base query variants，平台确定后再做 platform-specific rewrite。
+4. `light` 通常使用一个主要平台 Agent；`medium` 和 `deep` 在需要时并行多个平台 Agent。
+5. 一个 Agent 负责一个平台。同一平台命中多个 Skill 时，由该 Agent 按顺序执行。
+6. Router 只按需加载叶子 Skill，不扫描全部本地 Skill，不要求 MCP 作为直接依赖。
+7. GitHub 的源码结论需要继续读取目录、源码、依赖、测试、Issue 和 Release；论文证据需要核对正文或 PDF。
+8. 每次路由记录 requirement model、base queries、平台 queries、实际执行到的最终子 Skill、来源覆盖、停止原因和路线评分。
 
 ## 总体架构
 
 ```mermaid
 flowchart TD
     U[用户请求] --> R[Research Router]
-    R --> C[场景识别<br/>bug-fix / open-source / academic / community]
-    C --> M[交互模式<br/>direct / clarify]
-    M --> Q[需求模型<br/>目标 / 能力 / 限制 / 证据]
-    Q --> G[查询词生成<br/>多语言、多表达、多证据入口]
-    G --> I[内置注册表]
+    R --> Q[需求模型]
+    Q --> M[direct / clarify]
+    M --> C[主 scene]
+    C --> D[Depth]
+    D --> G[Base query variants]
+    G --> I[Registry]
     I --> P[平台匹配]
-    P --> D[深度选择<br/>light / medium / deep]
-    D --> X[平台分发包]
+    P --> W[Platform-specific rewrite]
+    W --> X[平台分发包]
     X --> A[一个平台一个 Agent]
     A --> S[按需加载外部叶子 Skill]
     S --> E[网页、README、源码、Issue、论文证据]
@@ -82,7 +85,7 @@ flowchart TD
 
 | 组件 | 负责内容 | 不负责内容 |
 | --- | --- | --- |
-| Router | 场景判断、需求拆解、查询词集合、深度、平台 Agent、去重、记录和调优入口 | 复制第三方 Skill、保存凭据、把静态注册当成运行成功 |
+| Router | requirement model、场景判断、深度、base/platform queries、平台 Agent、去重、记录和调优入口 | 复制第三方 Skill、保存凭据、把静态注册当成运行成功 |
 | 综合平台 Skill | 多个平台的搜索、读取和结果整理 | GitHub 源码级结论、论文正文证据的最终核验 |
 | 平台专项 Skill | 某个平台的详情、评论、互动或特殊接口 | 替代 Router 的全局路径决策 |
 | GitHub 分析 Skill | 目录、源码、依赖、测试、Issue、Release 和提交关系 | 仅凭标题或 README 下结论 |
@@ -110,7 +113,7 @@ git clone https://github.com/sxyq/research-router.git "${CODEX_HOME:-$HOME/.code
 
 ## 自动更新
 
-项目地址是 [https://github.com/sxyq/research-router](https://github.com/sxyq/research-router)。每次调用这个 Skill 时，Agent 会先运行：
+项目地址是 [https://github.com/sxyq/research-router](https://github.com/sxyq/research-router)。不要在普通路由开始时自动运行更新脚本。只有用户要求同步官方源码，且工作树状态已经确认后，才运行：
 
 ```bash
 python3 scripts/update-skill.py --apply
@@ -159,7 +162,11 @@ research-router/
 │   └── summaries/                   # 评分汇总
 ├── tuning/                          # 本地调优建议和已采用策略
 ├── scripts/                         # 确定性搜索、校验、评估和经验记录脚本
-│   ├── fast_search.py               # 免 Key 公共 API 的紧凑 JSON 搜索
+│   ├── route_plan.py                # requirement、Depth、查询和平台分发规划
+│   ├── fast_search.py               # 通用公开 discovery providers
+│   ├── bilibili_public.py           # B站公开搜索
+│   ├── v2ex_public.py               # V2EX公开 API读取
+│   ├── xueqiu_public.py             # 雪球公开 HTTP读取
 │   ├── update-skill.py              # 每七天一次的官方版本查询和覆盖更新
 │   └── update-experience.py         # 从路线记录生成 Skill/平台经验
 └── tests/                           # 固定路由案例，不访问真实平台
@@ -167,17 +174,20 @@ research-router/
 
 ## 默认路由
 
-入口 Skill 中直接保留当前已登记平台的快速索引；完整的平台级别、入口 Skill、脚本/适配器和上游候选目录见 [references/platform-index.md](references/platform-index.md)。当前分级为：一级 `github`、`academic`、`google-scholar`；二级 `52pojie`、`stackoverflow`、`linux-do`、`v2ex`；三级为视频、社交和补充发现平台。52pojie 固定为二级。
+入口 Skill 中直接保留当前已登记平台的快速索引；完整的平台级别、入口 Skill、脚本/适配器和上游候选目录见 [references/platform-index.md](references/platform-index.md)。当前分级为：一级 `github`、`academic`、`google-scholar`；二级包含 `52pojie`、`stackoverflow`、`linux-do`、`v2ex`、`discourse`、`youtube`、`twitter-x`；三级包含 Bilibili、Reddit、Xueqiu 和其他补充发现平台。52pojie 固定为二级。
 
 | 级别 | 平台或场景 | `light` | `medium` | `deep` |
-| --- | --- | --- | --- |
-| 3 | B站 | `autocli` | `autocli` | `autocli` + `last30days-cn` |
+| --- | --- | --- | --- | --- |
+| 3 | B站 | `bilibili-public` | `bilibili-public` + `autocli` | `bilibili-public` + `autocli` + `last30days-cn` |
 | 3 | 中国抖音 | 默认跳过，点名后启用 | `douyin-skills` | `douyin-skills` + `last30days-cn` |
 | 3 | TikTok | `autocli` | `autocli` | `autocli` |
 | 3 | 小红书 | `autocli` | `autocli` + `xiaohongshu-skills` | 三者按序执行 |
 | 2 | Linux.do | `autocli` | `autocli` | `autocli` |
-| 2 | V2EX | `autocli` | `autocli` | `autocli` + `last30days-cn` |
+| 2 | V2EX | `v2ex-public` | `v2ex-public` + `autocli` | `v2ex-public` + `autocli` + `last30days-cn` |
 | 2 | Discourse 技术论坛 | `forum-search` | `forum-search` | `forum-search` |
+| 2 | YouTube | `autocli` / `yt-dlp` | `autocli` / `yt-dlp` | `autocli` / `yt-dlp` |
+| 2 | Twitter/X | `autocli` / external CLI | `autocli` / external CLI | `autocli` / external CLI |
+| 3 | 雪球 | `xueqiu-public` | `xueqiu-public` | `xueqiu-public` |
 | 1 | GitHub | `github-search` | `github-search` → `github-analyze` | 上述两项 + `last30days-cn` |
 | 2 | 吾爱破解 / 52pojie.cn | `52pojie-research` | `52pojie-research`：列表/RSS → 选定帖子 | `52pojie-research`：热门、分页帖子与回帖 |
 | 1 | 论文与学术 | `autocli` | `anysearch` + `paper-research-router` | 再加 `literature-evidence-audit` |
@@ -269,18 +279,18 @@ python3 scripts/evaluate-route.py records/routes/YYYY-MM-DD/<route>.json
 
 ## 查询深度与 Agent 分工
 
-查询深度看需求派生出的查询词规模、证据要求和工作量。平台数量由用户指定的范围决定，不能单独用平台数量推断深度。
+Depth 先由平台范围、证据层级、平台 Agent 数量和执行范围决定，再生成查询词。查询数量用于记录实际覆盖，不反过来决定 Depth。用户明确的平台范围优先。
 
 ```mermaid
 flowchart TD
-    A[需求模型] --> B{查询条件}
-    B -->|2-4 组查询词<br/>快速确认| L[light]
-    B -->|5-10 组查询词<br/>需要比较详情| M[medium]
-    B -->|11 组以上<br/>或要求源码/全文证据| D[deep]
+    A[需求模型] --> B{平台、证据、执行范围}
+    B -->|1个平台<br/>单个Agent| L[light]
+    B -->|2-3个平台<br/>可并行| M[medium]
+    B -->|多平台或深证据<br/>可并行核验| D[deep]
     L --> L1[一个 Agent]
     L1 --> L2[一个综合 Skill]
     M --> M1[每个平台一个 Agent]
-    M1 --> M2[按匹配度和评分顺序执行]
+    M1 --> M2[平台内按顺序执行]
     D --> D1[多个平台 Agent 并行]
     D1 --> D2[每个平台内多个 Skill 顺序执行]
     L2 --> E[汇总证据]
@@ -288,11 +298,11 @@ flowchart TD
     D2 --> E
 ```
 
-| 深度 | 默认分配 | Skill 处理方式 | 典型产出 |
+| 深度 | 默认分配 | Skill 处理方式 | Base query variants |
 | --- | --- | --- | --- |
-| `light` | 一个 Agent | 使用一个综合多平台 Skill；只在有明确能力缺口时补充专项 Skill。 | 候选列表、简短判断、少量来源。 |
-| `medium` | 一个请求平台一个 Agent | 依据需求匹配度、证据完整度、兼容性和历史评分选择主 Skill；有明确缺口时再顺序补充专项 Skill。 | 平台级比较、详情证据和初步结论。 |
-| `deep` | 多个平台 Agent 并行 | 一个 Agent 负责一个平台；同一平台命中的多个 Skill 由它依次执行，最后统一整理。 | 交叉平台结果、源码或全文证据、失败说明。 |
+| `light` | 一个主要平台 Agent | 使用一个主要入口；只在有明确能力缺口时补充 fallback。 | 12–16+ |
+| `medium` | 2–3 个相关平台 Agent | 不同平台可并行；同一平台内按顺序执行 Skill。 | 16–24+ |
+| `deep` | 3–6 个相关平台 Agent | 多平台并行；继续读取源码、全文、评论链、metadata 或字幕。 | 20–30+，需要时增加 |
 
 ## 一次请求如何落地
 
@@ -306,9 +316,11 @@ sequenceDiagram
     participant S as 叶子 Skill
     participant E as 证据记录
     U->>R: 提出目标、范围和输出要求
-    R->>R: 识别 open-source 场景
-    R->>R: 生成能力词、限制词、平台词和证据词
-    R->>R: 匹配候选并选择查询深度
+    R->>R: 提取 requirement model
+    R->>R: 判断 direct / clarify
+    R->>R: 识别主 scene 和 Depth
+    R->>R: 生成 base query variants
+    R->>R: 选择平台并重写 platform-specific queries
     R->>A: 按平台分配任务
     A->>S: 按注册表顺序加载并执行
     S-->>A: 返回候选、链接和平台证据
@@ -321,8 +333,8 @@ sequenceDiagram
 
 ## 两种交互模式
 
-- `direct`：用户要求直接开始，按现有条件执行，缺失信息在结果中标记。
-- `clarify`：一次只问一个会改变路由的问题，直到目标、范围、平台、证据和输出条件明确。
+- `direct`：target 和 goal 已足够，按现有条件执行，缺失信息在结果中标记。
+- `clarify`：只在缺少会改变主要 route 的条件时提问，一次一个问题，并更新 requirement model。
 
 ## 记录和调优
 

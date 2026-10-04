@@ -3,18 +3,18 @@
   "display_name": "V2EX",
   "aliases": ["v2ex"],
   "tier": 2,
-  "route_skills": ["autocli", "last30days-cn"],
-  "scripts": ["scripts/fast_search.py"],
-  "search_components": ["ddgs"],
-  "adapter_type": "external-cli",
-  "access_mode": "public-or-browser",
+  "route_skills": ["v2ex-public", "autocli", "last30days-cn"],
+  "scripts": ["scripts/v2ex_public.py"],
+  "search_components": ["v2ex-public-api"],
+  "adapter_type": "local-public-api-plus-external-detail",
+  "access_mode": "public-api-or-external-detail",
   "status": "router-registered",
-  "script_note": "Use the optional ddgs provider for public discovery; topic and reply detail remains with AutoCLI.",
+  "script_note": "Use the local API adapter for hot, node, topic, reply, and user reads; it does not claim a V2EX full-text search API.",
   "capabilities": ["hot", "latest", "node", "topic detail", "replies"],
   "depth_routes": {
-    "light": ["autocli"],
-    "medium": ["autocli"],
-    "deep": ["autocli", "last30days-cn"]
+    "light": ["v2ex-public"],
+    "medium": ["v2ex-public", "autocli"],
+    "deep": ["v2ex-public", "autocli", "last30days-cn"]
   },
   "notes": "Use last30days-cn for time-bounded community heat, not as the default light entry."
 }

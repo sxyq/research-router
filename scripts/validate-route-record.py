@@ -46,6 +46,19 @@ def validate_router_path(value: object) -> list[str]:
     return errors
 
 
+def validate_requirement(value: object) -> list[str]:
+    if not isinstance(value, dict):
+        return ["requirement must be an object"]
+    errors: list[str] = []
+    for key in ("target", "goal"):
+        if not isinstance(value.get(key), str):
+            errors.append(f"requirement.{key} must be a string")
+    for key in ("capabilities", "context", "constraints", "evidence", "time", "explicit_platforms"):
+        if not isinstance(value.get(key), list) or not all(isinstance(item, str) for item in value[key]):
+            errors.append(f"requirement.{key} must be a string list")
+    return errors
+
+
 def validate_source_coverage(value: object) -> list[str]:
     if not isinstance(value, dict):
         return ["source_coverage must be an object"]
@@ -120,6 +133,8 @@ def validate_route(value: dict) -> list[str]:
         errors.append(f"depth must be one of {sorted(DEPTHS)}")
     if value["status"] not in STATUSES:
         errors.append(f"status must be one of {sorted(STATUSES)}")
+    if "requirement" in value:
+        errors.extend(validate_requirement(value["requirement"]))
     if not isinstance(value["query_variants"], list) or not all(
         isinstance(item, str) and item.strip() for item in value["query_variants"]
     ):
@@ -137,6 +152,11 @@ def validate_route(value: dict) -> list[str]:
                     errors.append(f"platforms[{index}] missing field: {key}")
             if "skill_order" in platform and not isinstance(platform["skill_order"], list):
                 errors.append(f"platforms[{index}].skill_order must be a list")
+            if "queries" in platform and (
+                not isinstance(platform["queries"], list)
+                or not all(isinstance(item, str) and item.strip() for item in platform["queries"])
+            ):
+                errors.append(f"platforms[{index}].queries must be a list of non-empty strings")
     if not isinstance(value["final_leaf_skills"], list) or not all(
         isinstance(item, str) and item.strip() for item in value["final_leaf_skills"]
     ):

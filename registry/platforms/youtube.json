@@ -1,0 +1,20 @@
+{
+  "platform_id": "youtube",
+  "display_name": "YouTube",
+  "aliases": ["youtube", "油管", "ytb"],
+  "tier": 2,
+  "route_skills": ["autocli"],
+  "scripts": [],
+  "search_components": ["youtube-yt-dlp"],
+  "adapter_type": "external-cli",
+  "access_mode": "public-external-cli",
+  "status": "router-registered",
+  "script_note": "Use yt-dlp when installed for search, metadata, and available subtitles; do not start transcription implicitly.",
+  "capabilities": ["search", "metadata", "subtitle when available", "video detail"],
+  "depth_routes": {
+    "light": ["autocli"],
+    "medium": ["autocli"],
+    "deep": ["autocli"]
+  },
+  "notes": "The external runtime must be probed at use time. Missing subtitles are reported as missing evidence, not silently transcribed."
+}

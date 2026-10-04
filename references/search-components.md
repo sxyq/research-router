@@ -37,6 +37,26 @@ python3 scripts/fast_search.py --provider ddgs --query "public web research API"
 
 没有安装 `ddgs` 时，脚本会返回 `status: unavailable`，不会自动改用带凭据的服务。
 
+## 独立平台适配器
+
+平台有自己的公开 HTTP/API 结构时，不把逻辑塞入 `fast_search.py`。按平台 Registry 直接调用独立脚本：
+
+```bash
+python3 scripts/bilibili_public.py --query "research workflow" --limit 5
+python3 scripts/v2ex_public.py --mode hot --limit 5
+python3 scripts/v2ex_public.py --mode topic --topic-id 123 --limit 20
+python3 scripts/xueqiu_public.py --mode search-stock --query "茅台" --limit 5
+python3 scripts/xueqiu_public.py --mode quote --symbol SH600519
+```
+
+这些脚本只负责各自平台的公开读取和紧凑 JSON 规范化：
+
+- Bilibili：公开视频搜索发现；视频详情和字幕按平台路由交给外部工具；
+- V2EX：hot、node、topic、replies、user；公开 API 没有全文关键词搜索；
+- Xueqiu：search-stock、quote、hot-posts、hot-stocks；当前反滥用策略可能要求公开会话；
+- YouTube：使用外部 `yt-dlp`，不在本地再包一层 Python；
+- Twitter/X、Reddit、LinkedIn、Facebook、Instagram、Boss：使用 Registry 登记的外部 CLI/MCP，缺少运行条件时返回 `runtime unavailable`。
+
 ## 平台专用组件
 
 | Provider | 平台 | 公开入口 | 主要结果 | 证据用途 |

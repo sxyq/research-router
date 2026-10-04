@@ -1,0 +1,13 @@
+{
+  "id": "v2ex-public",
+  "display_name": "V2EX Public API",
+  "role": "V2EX hot, node, topic, reply, and user reads",
+  "kind": "local-platform-adapter",
+  "source": "local:scripts/v2ex_public.py",
+  "load": "on-demand",
+  "platforms": ["v2ex"],
+  "tier": 2,
+  "adapter_type": "local-script",
+  "scripts": ["scripts/v2ex_public.py"],
+  "status": "local-included"
+}

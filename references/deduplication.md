@@ -2,7 +2,7 @@
 
 ## 规范化
 
-先用 `registry/aliases.json` 把平台名称归一，再用 Skill 的稳定 `id` 去重。仓库 URL、Skill 名称和本地 canonical path 分开保存。
+先用 `registry/aliases.json` 把平台名称归一，再用 Skill 的稳定 `id` 去重。仓库 URL、Skill 名称和本地 canonical path 分开保存。裸 `x` 不归一到 Twitter/X。
 
 ## 命中处理
 
@@ -11,6 +11,7 @@
 - 同一平台最多保留两个专项 Skill。
 - 综合多平台 Skill 可跨平台复用，不计入专项上限。
 - 同一底层实现的不同文档包装（例如 AutoCLI 与 Qiaomu OpenCLI）视为重复候选，浅度只保留一个。
+- 记录 base query variants 与平台重写后的 queries；同一语义在不同平台的合法重写不视为重复查询。
 
 ## Agent 边界
 

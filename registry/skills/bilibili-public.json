@@ -1,0 +1,13 @@
+{
+  "id": "bilibili-public",
+  "display_name": "Bilibili Public Search",
+  "role": "Bilibili public video search discovery",
+  "kind": "local-platform-adapter",
+  "source": "local:scripts/bilibili_public.py",
+  "load": "on-demand",
+  "platforms": ["bilibili"],
+  "tier": 3,
+  "adapter_type": "local-script",
+  "scripts": ["scripts/bilibili_public.py"],
+  "status": "local-included"
+}

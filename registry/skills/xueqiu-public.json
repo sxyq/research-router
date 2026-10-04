@@ -1,0 +1,13 @@
+{
+  "id": "xueqiu-public",
+  "display_name": "Xueqiu Public API",
+  "role": "Xueqiu stock search, quotes, hot posts, and hot stocks",
+  "kind": "local-platform-adapter",
+  "source": "local:scripts/xueqiu_public.py",
+  "load": "on-demand",
+  "platforms": ["xueqiu"],
+  "tier": 3,
+  "adapter_type": "local-script",
+  "scripts": ["scripts/xueqiu_public.py"],
+  "status": "local-included"
+}

@@ -1,47 +1,125 @@
 # 需求驱动的查询词生成
 
-查询词来自用户需求的不同语义切面，不从单个标题随机扩写。
+查询生成分两层：先从完整 requirement model 产生通用 base query variants，再在平台确定后生成 platform-specific queries。两层都服务于用户目标，不把一个标题词扩成一串近义词。
 
-## 生成顺序
+## Requirement model
 
-1. 写出一句目标句：用户想解决什么问题，最终要得到什么判断。
-2. 提取能力词：例如“跨平台 Skill、按需加载、源码分析、评论证据、PDF 正文”。
-3. 提取限制词：平台、语言、时间、登录要求、Skill-only、许可证、社区认可度。
-4. 加入同义表达和中英文平台术语。
-5. 加入证据词：`README`、`source code`、`adapter`、`tests`、`issues`、`releases`、`full text`、`PDF`。
-6. 删除只描述项目名称、不能表达用户目标的查询词。
+先保留这些字段，缺失字段保持为空：
 
-## 三类查询模板
+```text
+target
+goal
+capabilities
+context
+constraints
+evidence
+time
+explicit_platforms
+```
 
-### 开源项目或 Skill
+字段用途：
 
-- `<问题目标> + agent skill`
-- `<能力组合> + multi-platform + skill`
-- `<平台集合> + search adapter + agent`
-- `<目标工具> + README + source code + tests`
-- `<目标工具> + alternatives + maintenance + community`
+- `target`：项目、工具、论文、错误、主题或研究对象；
+- `goal`：希望得到的判断或解决方案；
+- `capabilities`：必须覆盖的功能和任务；
+- `context`：版本、框架、运行环境和使用场景；
+- `constraints`：开源、免费、许可证、语言、无 Key 或访问范围；
+- `evidence`：README、源码、Issue、论坛正文、评论、字幕、论文正文或 PDF；
+- `time`：最近、指定日期或时间窗口；
+- `explicit_platforms`：用户点名的平台范围。
 
-### 修 Bug
+## Base query variants
 
-- `<完整错误文本> + <库/版本>`
-- `<错误现象> + <API/框架> + fix`
-- `<仓库> + issue + <错误文本>`
-- `<仓库> + commit + regression test`
+按互补方向生成查询，不做所有字段的笛卡尔积。每个方向只保留能带来不同结果的表达：
 
-### 论文
+1. 核心目标：`target + goal`；
+2. 能力发现：`target + capability`；
+3. 实现发现：`target + implementation / adapter / integration`；
+4. 源码核验：`target + source code / repository / tests`；
+5. 问题定位：`target + error / issue / workaround / version`；
+6. 比较发现：`target + alternatives / comparison / benchmark`；
+7. 用户经验：`target + experience / review / community feedback`；
+8. 时间范围：`target + recent / latest / date range`；
+9. 证据定位：`target + README / Issue / paper body / PDF`；
+10. 中英文术语：同一目标分别使用中文和英文任务词；
+11. 反例和限制：`target + limitations / failure modes / reproducibility`；
+12. 官方来源：`target + documentation / release / primary source`。
 
-- `<研究问题> + survey + benchmark`
-- `<方法/任务> + recent papers + venue`
-- `<论断> + primary paper + full text`
-- `<方法> + ablation + reproducibility`
+基础任务也应生成约 12–16 个有意义的 variants；medium 约 16–24 个；deep 约 20–30 个，需求需要时继续增加。数量不会反过来决定 depth。
 
-### 社区论坛
+## Platform-specific rewrite
 
-- `<问题或工具> + 论坛版块 + 经验`
-- `<错误现象> + 版本 + 吾爱破解`
-- `<工具能力> + 52pojie + 教程/讨论/回帖`
-- `<关键词> + site:52pojie.cn/thread-`
+平台确定后，不把 base queries 原样复制给所有平台。用同一 requirement 的平台语言重组查询：
 
-## GitHub 查询要求
+### GitHub
 
-GitHub 项目发现可用 3–5 组互补查询；候选确认后再读取 README、树、依赖、入口源码、测试、Issue 和 Release。标题命中不等于需求命中。
+优先使用：
+
+```text
+repository, skill, source, implementation, adapter, tests, issues, releases
+```
+
+示例：
+
+```text
+<target> repository implementation adapter tests
+<target> issues release maintenance
+<capability> open source skill source code
+```
+
+### Twitter / X
+
+优先使用：
+
+```text
+项目名、开发者、自然语言评价、发布消息、实际体验、近期讨论
+```
+
+少用 README、source code、tests 这类 GitHub 术语，除非用户明确要求源码链接。
+
+### YouTube
+
+优先使用：
+
+```text
+tutorial, workflow, demo, review, comparison, talk, presentation, walkthrough
+```
+
+如果用户要求字幕或视频内证据，另行记录 metadata、字幕可用性和缺失情况。
+
+### Reddit、V2EX 和 Discourse
+
+优先使用：
+
+```text
+experience, problem, recommendation, discussion, comparison, 实际使用, 踩坑, 解决方案
+```
+
+V2EX 的公开 API 负责 hot、node、topic、replies、user 等读取；关键词 discovery 仍使用通用搜索或已验证的外部工具，不能把公开 API写成全文关键词搜索。
+
+### Bilibili
+
+优先使用：
+
+```text
+教程、演示、实测、评测、对比、工作流
+```
+
+本地适配器只做公开搜索发现；视频详情和字幕按 Registry 选择外部工具。
+
+## Query packet
+
+每个平台的 dispatch packet 至少保存：
+
+```json
+{
+  "platform_id": "github",
+  "queries": [
+    "multi-platform research skill repository implementation",
+    "agent search router source code tests"
+  ],
+  "evidence": ["README", "source", "issues"]
+}
+```
+
+全局 `query_variants` 记录 base 层；平台对象的 `queries` 记录实际发送给该平台的重组结果。这样路线可以回放，也能识别不同平台是否误用了同一套查询。

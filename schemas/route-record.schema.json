@@ -9,6 +9,7 @@
     "created_at": {"type": "string", "format": "date-time"},
     "request_summary": {"type": "string"},
     "context_summary": {"type": "string"},
+    "requirement": {"$ref": "#/$defs/requirement"},
     "scene": {"enum": ["bug-fix", "open-source", "academic", "community"]},
     "interaction_mode": {"enum": ["direct", "clarify"]},
     "depth": {"enum": ["light", "medium", "deep"]},
@@ -28,12 +29,28 @@
     "status": {"enum": ["planned", "running", "completed", "partial", "failed"]}
   },
   "$defs": {
+    "requirement": {
+      "type": "object",
+      "required": ["target", "goal", "capabilities", "context", "constraints", "evidence", "time", "explicit_platforms"],
+      "properties": {
+        "target": {"type": "string"},
+        "goal": {"type": "string"},
+        "capabilities": {"type": "array", "items": {"type": "string"}},
+        "context": {"type": "array", "items": {"type": "string"}},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "time": {"type": "array", "items": {"type": "string"}},
+        "explicit_platforms": {"type": "array", "items": {"type": "string"}}
+      }
+    },
     "platform": {
       "type": "object",
       "required": ["platform_id", "agent_id", "skill_order"],
       "properties": {
         "platform_id": {"type": "string"},
         "agent_id": {"type": "string"},
+        "tier": {"type": "integer", "minimum": 1, "maximum": 3},
+        "queries": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "skill_order": {"type": "array", "items": {"type": "string"}},
         "status": {"type": "string"}
       }

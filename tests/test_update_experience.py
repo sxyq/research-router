@@ -19,9 +19,19 @@ class ExperienceTests(unittest.TestCase):
             "created_at": "2026-09-16T00:00:00+08:00",
             "scene": "community",
             "depth": "medium",
+            "requirement": {
+                "target": "52pojie",
+                "goal": "read a public thread",
+                "capabilities": ["community"],
+                "context": [],
+                "constraints": [],
+                "evidence": ["forums"],
+                "time": [],
+                "explicit_platforms": ["52pojie"],
+            },
             "query_variants": ["query"],
             "platforms": [
-                {"platform_id": "52pojie", "agent_id": "agent-1", "skill_order": ["52pojie-research"]}
+                {"platform_id": "52pojie", "agent_id": "agent-1", "queries": ["52pojie public thread"], "skill_order": ["52pojie-research"]}
             ],
             "matched_skills": [{"skill_id": "52pojie-research", "reason": "public forum"}],
             "executed_leaf_skills": ["52pojie-research"],
@@ -51,6 +61,7 @@ class ExperienceTests(unittest.TestCase):
         self.assertEqual(skill_records[0]["subject_id"], "52pojie-research")
         self.assertTrue(skill_records[0]["executed"])
         self.assertEqual(platform_records[0]["skill_order"], ["52pojie-research"])
+        self.assertEqual(platform_records[0]["platform_queries"], ["52pojie public thread"])
 
     def test_append_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:
