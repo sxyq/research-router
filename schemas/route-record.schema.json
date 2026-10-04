@@ -50,9 +50,19 @@
         "platform_id": {"type": "string"},
         "agent_id": {"type": "string"},
         "tier": {"type": "integer", "minimum": 1, "maximum": 3},
+        "depth": {"enum": ["light", "medium", "deep"]},
         "queries": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "skill_order": {"type": "array", "items": {"type": "string"}},
-        "status": {"type": "string"}
+        "status": {"type": "string"},
+        "scripts": {"type": "array", "items": {"type": "string"}},
+        "search_components": {"type": "array", "items": {"type": "string"}},
+        "adapter_type": {"type": "string"},
+        "access_mode": {"type": "string"},
+        "depth_routes": {"type": "object"},
+        "goal": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "stop_condition": {"type": "string"},
+        "selection_reason": {"type": "string"}
       }
     },
     "skill": {

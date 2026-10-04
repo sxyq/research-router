@@ -15,6 +15,11 @@
     "request": "去 YouTube 找最近大家怎么用 Claude Code 做 research workflow",
     "expected": {
       "platforms": ["youtube"],
+      "requirement": {
+        "target": "Claude Code",
+        "explicit_platforms": ["youtube"],
+        "time": ["recent"]
+      },
       "tier": 2,
       "query_terms": ["tutorial", "workflow", "demo"]
     }
@@ -25,6 +30,7 @@
     "expected": {
       "scene": "community",
       "platforms": ["twitter-x"],
+      "context_target_from_previous_turn": "research-router",
       "tier": 2,
       "query_terms": ["developer", "recent discussion", "review"]
     }
@@ -48,6 +54,24 @@
       "platforms": ["youtube"],
       "minimum_query_count": 20,
       "no_extra_platforms": true
+    }
+  },
+  {
+    "name": "implicit-long-term-evaluation",
+    "request": "这个开源项目到底值不值得长期使用？",
+    "semantic_expectations": [
+      "maintenance and release activity",
+      "implementation quality and tests",
+      "issue state and known problems",
+      "community feedback and alternatives"
+    ]
+  },
+  {
+    "name": "bug-and-open-source-mixed-goal",
+    "request": "找一个开源项目解决这个 Python 报错，并比较哪个项目维护最好",
+    "semantic_expectations": {
+      "scene_is_primary_goal": "open-source",
+      "preserve_evidence": ["bug", "issues", "maintenance"]
     }
   },
   {

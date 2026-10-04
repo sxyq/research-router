@@ -1,8 +1,8 @@
 # Research Router
 
-一个独立的 Codex Skill，用于把联网查询按“场景 → 交互模式 → 查询深度 → 平台 → 子 Skill → 平台 Agent”组织起来。
+一个独立的 Codex Skill，用于把联网查询按“需求理解 → 交互模式 → 主场景 → Depth → 平台 → 子 Skill → 平台 Agent”组织起来。
 
-它适合放在 Codex 或其他支持 `SKILL.md` 的 Agent 宿主中，作为联网调研的入口。Router 负责理解需求、选择路径、生成平台分发包、汇总证据和记录路线经验，平台访问由命中的外部 Skill 完成。
+它适合放在 Codex 或其他支持 `SKILL.md` 的 Agent 宿主中，作为联网调研的入口。Agent 负责理解需求、选择路径和生成查询，Router 负责读取 Registry、补全平台分发包、汇总证据和记录路线经验，平台访问由命中的外部 Skill 完成。
 
 ## 为什么需要它
 
@@ -48,14 +48,15 @@ flowchart LR
 
 ## 设计原则
 
-1. 先提取 requirement model，再判断 direct / clarify、scene 和 depth。
-2. Depth 由平台范围、平台 Agent 数量、证据层级和执行范围决定；查询数量不决定 Depth。
-3. 每个请求先生成 base query variants，平台确定后再做 platform-specific rewrite。
-4. `light` 通常使用一个主要平台 Agent；`medium` 和 `deep` 在需要时并行多个平台 Agent。
-5. 一个 Agent 负责一个平台。同一平台命中多个 Skill 时，由该 Agent 按顺序执行。
-6. Router 只按需加载叶子 Skill，不扫描全部本地 Skill，不要求 MCP 作为直接依赖。
-7. GitHub 的源码结论需要继续读取目录、源码、依赖、测试、Issue 和 Release；论文证据需要核对正文或 PDF。
-8. 每次路由记录 requirement model、base queries、平台 queries、实际执行到的最终子 Skill、来源覆盖、停止原因和路线评分。
+1. 由 Agent 先理解请求和相关对话上下文，构建 requirement model，再判断 direct / clarify、scene 和 depth。
+2. Agent 负责语义拆分、指代继承、隐含目标、实体联想、查询扩展和平台专用查询重组；Python 只负责 Registry、别名归一、分发包补全、结构校验和适配器。
+3. Depth 由平台范围、平台 Agent 数量、证据层级和执行范围决定；查询数量不决定 Depth。
+4. 每个请求先生成 base query variants，平台确定后再做 platform-specific rewrite。
+5. `light` 通常使用一个主要平台 Agent；`medium` 和 `deep` 在需要时并行多个平台 Agent。
+6. 一个 Agent 负责一个平台。同一平台命中多个 Skill 时，由该 Agent 按顺序执行。
+7. Router 只按需加载叶子 Skill，不扫描全部本地 Skill，不要求 MCP 作为直接依赖。
+8. GitHub 的源码结论需要继续读取目录、源码、依赖、测试、Issue 和 Release；论文证据需要核对正文或 PDF。
+9. 每次路由记录 requirement model、base queries、平台 queries、实际执行到的最终子 Skill、来源覆盖、停止原因和路线评分。
 
 ## 总体架构
 
@@ -162,7 +163,7 @@ research-router/
 │   └── summaries/                   # 评分汇总
 ├── tuning/                          # 本地调优建议和已采用策略
 ├── scripts/                         # 确定性搜索、校验、评估和经验记录脚本
-│   ├── route_plan.py                # requirement、Depth、查询和平台分发规划
+│   ├── route_plan.py                # Agent 计划的 Registry 解析和平台分发包补全
 │   ├── fast_search.py               # 通用公开 discovery providers
 │   ├── bilibili_public.py           # B站公开搜索
 │   ├── v2ex_public.py               # V2EX公开 API读取
@@ -207,7 +208,7 @@ python3 scripts/fast_search.py --provider arxiv --query "tool use token efficien
 python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 ```
 
-当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`。Google Scholar 不需要 API Key，返回标题、作者、年份、引用/版本数量、PDF 候选和摘要片段；摘要片段只用于发现。结果的 `evidence_level` 默认是 `discovery`；只有选定来源被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
+当前脚本支持 GitHub、Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`。Google Scholar 不需要 API Key，返回标题、作者、年份、引用/版本数量、PDF 候选和摘要片段；摘要片段只用于发现。Exa 登记为可选的 no-key MCP search component，但需要已有 MCP 配置，不属于本地脚本默认路径。结果的 `evidence_level` 默认是 `discovery`；只有选定来源被读取后，才能支持正文级结论。付费或需要凭据的搜索服务不在默认路径中。
 
 建议的执行链是：
 

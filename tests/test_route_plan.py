@@ -10,53 +10,89 @@ assert SPEC and SPEC.loader
 SPEC.loader.exec_module(MODULE)
 
 
+def agent_plan(*, platform_id="YouTube", depth="deep", queries=None):
+    return {
+        "requirement": {
+            "target": "Claude Code",
+            "goal": "了解最近如何使用 Claude Code 构建 research workflow",
+            "capabilities": ["research workflow", "agent workflow"],
+            "context": ["Claude Code"],
+            "constraints": ["recent"],
+            "evidence": ["video metadata", "subtitles when available"],
+            "time": ["recent"],
+            "explicit_platforms": ["油管"],
+        },
+        "interaction_mode": "direct",
+        "scene": "community",
+        "depth": depth,
+        "query_variants": queries or ["query one", "query two", "query three"],
+        "platforms": [
+            {
+                "platform_id": platform_id,
+                "queries": ["Claude Code tutorial workflow", "Claude Code research demo"],
+            }
+        ],
+        "router_path": [{"stage": "requirement"}, {"stage": "platform-selection"}],
+    }
+
+
 class RoutePlanTests(unittest.TestCase):
-    def test_requirement_model_precedes_scene_and_depth(self):
-        plan = MODULE.plan_request("帮我找几个类似 research-router 的开源 Skill，并查看实际源码实现")
-        self.assertEqual(plan["interaction_mode"], "direct")
-        self.assertEqual(plan["scene"], "open-source")
-        self.assertEqual(plan["depth"], "deep")
-        self.assertEqual(
-            set(plan["requirement"]),
-            {"target", "goal", "capabilities", "context", "constraints", "evidence", "time", "explicit_platforms"},
-        )
-        self.assertGreaterEqual(len(plan["query_variants"]), 20)
-        github = next(row for row in plan["platforms"] if row["platform_id"] == "github")
-        self.assertIn("github-search", github["skill_order"])
-        self.assertIn("github-analyze", github["skill_order"])
-        self.assertNotEqual(plan["query_variants"][:3], github["queries"][:3])
-
-    def test_explicit_youtube_scope_overrides_deep_breadth(self):
-        plan = MODULE.plan_request("只查 YouTube，深度分析这个工具最近的教程和评价")
-        self.assertEqual(plan["depth"], "deep")
-        self.assertEqual([row["platform_id"] for row in plan["platforms"]], ["youtube"])
+    def test_agent_plan_is_resolved_without_natural_language_inference(self):
+        plan = MODULE.resolve_route_plan(agent_plan())
+        self.assertEqual(plan["requirement"]["target"], "Claude Code")
+        self.assertEqual(plan["requirement"]["explicit_platforms"], ["youtube"])
+        self.assertEqual(plan["platforms"][0]["platform_id"], "youtube")
         self.assertEqual(plan["platforms"][0]["tier"], 2)
-        self.assertGreaterEqual(len(plan["query_variants"]), 20)
-        rewritten = " ".join(plan["platforms"][0]["queries"])
-        for term in ("tutorial", "workflow", "demo", "review"):
-            self.assertIn(term, rewritten)
+        self.assertEqual(plan["platforms"][0]["search_components"], ["youtube-yt-dlp"])
+        self.assertEqual(plan["platforms"][0]["adapter_type"], "external-cli")
+        self.assertEqual(plan["platforms"][0]["access_mode"], "public-external-cli")
+        self.assertEqual(plan["platforms"][0]["skill_order"], ["autocli"])
 
-    def test_twitter_aliases_and_bare_x(self):
-        for text in ("Twitter 上的开发者评价", "推特上的开发者评价", "查看 x.com 上的讨论"):
-            self.assertIn("twitter-x", MODULE.alias_matches(text))
-        self.assertNotIn("twitter-x", MODULE.alias_matches("研究 x 的含义"))
+    def test_platform_alias_normalization_is_exact_and_bare_x_is_rejected(self):
+        self.assertEqual(MODULE.canonicalize_platform("推特"), "twitter-x")
+        self.assertEqual(MODULE.canonicalize_platform("x.com"), "twitter-x")
+        self.assertEqual(MODULE.canonicalize_platform("YouTube"), "youtube")
+        with self.assertRaises(MODULE.PlanError):
+            MODULE.canonicalize_platform("x")
+        with self.assertRaises(MODULE.PlanError):
+            MODULE.canonicalize_platform("bug")
 
-    def test_depth_controls_breadth_not_query_count(self):
-        light = MODULE.plan_request("研究 research-router")
-        medium = MODULE.plan_request("比较 research-router 在 GitHub 和 V2EX 的社区反馈")
-        deep = MODULE.plan_request("跨平台深入研究 research-router 的实现、教程和社区反馈")
-        self.assertEqual(light["depth"], "light")
-        self.assertEqual(medium["depth"], "medium")
-        self.assertEqual(deep["depth"], "deep")
-        self.assertGreaterEqual(len(light["query_variants"]), 12)
-        self.assertGreaterEqual(len(medium["query_variants"]), 16)
-        self.assertGreaterEqual(len(deep["query_variants"]), 20)
-        self.assertEqual(len(light["platforms"]), 1)
-        self.assertGreaterEqual(len(deep["platforms"]), 3)
+    def test_registry_packet_preserves_agent_queries_without_truncation(self):
+        queries = [f"semantic direction {index}" for index in range(37)]
+        plan = agent_plan(queries=queries)
+        plan["platforms"][0]["queries"] = queries[:23]
+        resolved = MODULE.resolve_route_plan(plan)
+        self.assertEqual(resolved["query_variants"], queries)
+        self.assertEqual(resolved["platforms"][0]["queries"], queries[:23])
 
-    def test_missing_target_uses_clarify(self):
-        plan = MODULE.plan_request("帮我研究一下")
-        self.assertEqual(plan["interaction_mode"], "clarify")
+    def test_deep_packet_can_contain_multiple_registry_backed_platforms(self):
+        plan = agent_plan(depth="deep")
+        plan["requirement"]["explicit_platforms"] = []
+        plan["platforms"] = [
+            {"platform_id": "github", "queries": ["router implementation source"]},
+            {"platform_id": "V2EX", "queries": ["research router 使用体验"]},
+            {"platform_id": "推特", "queries": ["research-router developer experience"]},
+        ]
+        resolved = MODULE.resolve_route_plan(plan)
+        self.assertEqual(
+            [item["platform_id"] for item in resolved["platforms"]],
+            ["github", "v2ex", "twitter-x"],
+        )
+        self.assertEqual(resolved["platforms"][0]["scripts"], ["scripts/fast_search.py"])
+        self.assertEqual(resolved["platforms"][1]["scripts"], ["scripts/v2ex_public.py"])
+        self.assertEqual(resolved["platforms"][2]["scripts"], [])
+
+    def test_unknown_platform_is_reported(self):
+        plan = agent_plan(platform_id="unknown platform")
+        with self.assertRaisesRegex(MODULE.PlanError, "unknown platform"):
+            MODULE.resolve_route_plan(plan)
+
+    def test_agent_semantic_planner_is_required(self):
+        self.assertFalse(hasattr(MODULE, "plan_request"))
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("import re", source)
+        self.assertNotIn("CAPABILITY_TERMS", source)
+        self.assertNotIn("def extract_requirement", source)
 
 
 if __name__ == "__main__":

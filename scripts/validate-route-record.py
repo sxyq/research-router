@@ -157,6 +157,22 @@ def validate_route(value: dict) -> list[str]:
                 or not all(isinstance(item, str) and item.strip() for item in platform["queries"])
             ):
                 errors.append(f"platforms[{index}].queries must be a list of non-empty strings")
+            for key in ("scripts", "search_components"):
+                if key in platform and (
+                    not isinstance(platform[key], list)
+                    or not all(isinstance(item, str) for item in platform[key])
+                ):
+                    errors.append(f"platforms[{index}].{key} must be a string list")
+            for key in ("adapter_type", "access_mode", "stop_condition"):
+                if key in platform and not isinstance(platform[key], str):
+                    errors.append(f"platforms[{index}].{key} must be a string")
+            if "depth" in platform and platform["depth"] not in DEPTHS:
+                errors.append(f"platforms[{index}].depth must be one of {sorted(DEPTHS)}")
+            if "evidence" in platform and (
+                not isinstance(platform["evidence"], list)
+                or not all(isinstance(item, str) for item in platform["evidence"])
+            ):
+                errors.append(f"platforms[{index}].evidence must be a string list")
     if not isinstance(value["final_leaf_skills"], list) or not all(
         isinstance(item, str) and item.strip() for item in value["final_leaf_skills"]
     ):

@@ -1,6 +1,16 @@
 # 需求驱动的查询词生成
 
-查询生成分两层：先从完整 requirement model 产生通用 base query variants，再在平台确定后生成 platform-specific queries。两层都服务于用户目标，不把一个标题词扩成一串近义词。
+查询生成分两层：由 Agent 先从完整 requirement model 产生通用 base query variants，再在平台确定后生成 platform-specific queries。Python 不从自然语言拼接查询，也不把一个标题词扩成一串固定近义词。
+
+## 语义规划
+
+Agent 先读取用户请求和直接相关的对话上下文，再按下面的顺序工作：
+
+```text
+Understand → Decompose → Infer → Associate → Expand → Recombine
+```
+
+明确内容直接进入需求模型；上下文能够解析的指代沿用上文对象；合理推导进入研究方向；不确定且会改变主要路线的内容才进入 `clarify`。相关实体和名称变体只在能覆盖用户目标时加入，不能无限扩展。
 
 ## Requirement model
 
@@ -30,7 +40,7 @@ explicit_platforms
 
 ## Base query variants
 
-按互补方向生成查询，不做所有字段的笛卡尔积。每个方向只保留能带来不同结果的表达：
+按互补方向生成查询，不做所有字段的笛卡尔积，也不套用固定模板。每个方向只保留能带来不同结果的表达：
 
 1. 核心目标：`target + goal`；
 2. 能力发现：`target + capability`；
@@ -45,7 +55,7 @@ explicit_platforms
 11. 反例和限制：`target + limitations / failure modes / reproducibility`；
 12. 官方来源：`target + documentation / release / primary source`。
 
-基础任务也应生成约 12–16 个有意义的 variants；medium 约 16–24 个；deep 约 20–30 个，需求需要时继续增加。数量不会反过来决定 depth。
+基础任务也应生成约 12–16 个有意义的 variants；medium 约 16–24 个；deep 约 20–30 个，需求需要时继续增加。数量不会反过来决定 depth，也不应使用固定切片压缩 deep 查询。
 
 ## Platform-specific rewrite
 

@@ -12,7 +12,7 @@
       "display_name": "Exa MCP search",
       "kind": "external-mcp",
       "source": "https://docs.exa.ai/reference/exa-mcp",
-      "requires_api_key": true,
+      "requires_api_key": false,
       "status": "optional-runtime",
       "platforms": [],
       "providers": ["exa"],

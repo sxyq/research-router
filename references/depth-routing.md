@@ -1,6 +1,6 @@
 # 查询深度
 
-Depth 表达检索广度、平台 Agent 数量、证据层级和执行范围。先依据需求判断 depth，再生成 base query variants。query 数量只是执行记录，不能决定 depth。
+Depth 由 Agent 根据需求覆盖范围、平台范围、独立来源数量、证据层级和执行范围判断。先判断 depth，再生成 base query variants。query 数量只是执行记录，不能决定 depth。
 
 | 深度 | 默认平台范围 | 执行方式 | Base query variants | 结果要求 |
 | --- | --- | --- | ---: | --- |
@@ -11,6 +11,10 @@ Depth 表达检索广度、平台 Agent 数量、证据层级和执行范围。�
 ## 用户范围优先
 
 用户明确指定平台时，平台范围优先于默认 breadth。`只查 YouTube` 的 deep route 仍然只有 YouTube；deep 体现在更多查询、更多结果、metadata/字幕读取和更深的来源核验。
+
+## Agent 判断依据
+
+Agent 综合用户目标、是否需要源码/全文/评论链/字幕、是否要比较多个对象、是否要跨平台交叉验证，以及时间范围判断 depth。`深入`、`完整` 等词只能作为语义证据，不能单独触发固定级别。
 
 ## 提升条件
 

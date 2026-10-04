@@ -7,7 +7,32 @@ metadata:
 
 # Research Router
 
-Use this Skill as the independent entrypoint for internet research. It decides what kind of query the user has, how much query expansion is justified, which platform Skills are needed, and which leaf Skill actually ran.
+Use this Skill as the independent entrypoint for internet research. The Agent decides what kind of query the user has, how much query expansion is justified, and which platforms are relevant; the Router resolves registered Skills and records which leaf Skill actually ran.
+
+## Agent 与 Python 的职责边界
+
+需求理解属于当前 Agent 的语义工作。Agent 读取当前请求和本轮对话中直接相关的上下文，理解用户真正要解决的问题，再完成：
+
+```text
+Understand
+→ Decompose
+→ Infer
+→ Associate
+→ Expand
+→ Recombine
+```
+
+这一步由 Agent 负责：
+
+- 构建 `target`、`goal`、`capabilities`、`context`、`constraints`、`evidence`、`time`、`explicit_platforms`；
+- 解析“这个项目”“它”“那个工具”等上下文指代；
+- 区分用户明确提出的内容、合理推导、查询扩展和未知项；
+- 联想相关实体、名称变体、中英文表达和互补的查询方向；
+- 判断 `direct` / `clarify`、主 `scene`、`depth`、平台范围和 platform-specific query rewrite。
+
+不得用正则、关键词命中、固定模板或查询数量来代替这些语义判断。关键词可以出现在案例和示例中，但不能成为正式路由依据。不要输出或保存模型内部推理，只保存结构化需求、查询、平台选择和简短选择结论。
+
+Python 脚本和 Registry 只做确定性工作：平台别名归一、Registry 读取、平台存在性验证、Tier/Skill/script/component/access 字段补全、结构校验、平台适配器调用和结果规范化。`scripts/route_plan.py` 接收 Agent 已生成的 JSON 计划；它不接收自然语言，也不猜测 `target`、`scene`、`depth` 或查询词。
 
 ## Skill update check
 
@@ -21,7 +46,7 @@ The script contacts the repository at most once every seven days. It stores only
 
 ## Required order
 
-1. Extract a requirement model before choosing a scene. Keep these slots when present:
+1. Let the Agent build a requirement model before choosing a scene. Keep these slots when present:
    - `target`: the object being researched;
    - `goal`: the decision or answer the user needs;
    - `capabilities`: capabilities that must be covered;
@@ -30,7 +55,7 @@ The script contacts the repository at most once every seven days. It stores only
    - `evidence`: README, source, Issue, forum body, video metadata, paper body, or PDF;
    - `time`: recency or date range;
    - `explicit_platforms`: platforms named by the user.
-   Missing slots stay empty. Do not compress the request into one keyword.
+   Missing slots stay empty. Do not compress the request into one keyword. Use the current conversation to resolve references before asking for clarification.
 2. Choose one interaction mode:
    - `direct`: the target and goal are usable; start with the supplied conditions and record any remaining evidence gap.
    - `clarify`: ask one focused question only when a missing target, scope, or acceptance condition would change the route.
@@ -40,12 +65,12 @@ The script contacts the repository at most once every seven days. It stores only
    - `academic`: discover papers, authors, venues, and evidence from the paper body or PDF.
    - `community`: find public discussions, practical reports, and experience-based evidence in forums.
 4. Choose `light`, `medium`, or `deep` from platform breadth, parallel platform Agents, source depth, and execution scope. Query count does not choose depth. User platform limits override default breadth.
-5. Generate a generous base query set from the requirement model, then rewrite it for each selected platform. Read [query-generation.md](references/query-generation.md). Never send the same unmodified query set to every platform.
-6. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Load only the selected external Skill's `SKILL.md` and directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
+5. Generate a generous base query set from the requirement model through Agent reasoning, then rewrite it for each selected platform. Read [query-generation.md](references/query-generation.md). Never send the same unmodified query set to every platform.
+6. Read `registry/platforms.index.json`, `registry/skills.index.json`, and `registry/search-components.index.json`, then read the selected registered platform/Skill entries. Use `scripts/route_plan.py` only after the Agent has produced the structured plan. Load only the selected external Skill's `SKILL.md` and directly relevant references. Do not scan the local Skill collection and do not make MCP a required dependency.
    The platform quick index is below; read [the full platform index](references/platform-index.md) when the request names a catalog-only platform or needs the adapter limits. Catalog-only rows record upstream coverage and require a runtime availability check before selection.
    For `community`, prefer a platform-specific public-forum adapter. The 52pojie adapter reads public listings, RSS, the hot guide, and selected thread pages; it does not use login-only or attachment routes. For public API discovery, use `scripts/fast_search.py` and return compact JSON before selecting pages for reading.
 7. Deduplicate overlapping candidates, keep at most two platform-specific Skills per platform, and preserve a general multi-platform Skill when it reduces repeated work.
-8. Build one dispatch packet per selected platform. Include the platform tier, goal, platform-specific queries, evidence requirement, depth, Skill order, script or adapter path, access condition, and stop condition.
+8. Build one dispatch packet per selected platform. The Agent supplies the platform, goal, queries, evidence requirement, and stop condition. Registry resolution supplies the tier, Skill order, script paths, search components, adapter type, access mode, and depth routes.
 9. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
 10. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
 11. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
@@ -53,7 +78,7 @@ The script contacts the repository at most once every seven days. It stores only
 
 ## Platform quick index
 
-Use this table to map a platform to its entry Skill and script or adapter. `external` means the route is supplied by an installed third-party Skill or CLI. The local quick-search script only uses public endpoints and does not require an API key.
+Use this table to map a platform to its entry Skill and script or adapter. `external` means the route is supplied by an installed third-party Skill or CLI. The local quick-search script only uses public endpoints and does not require an API key. Exa is an optional no-key MCP component, not a platform; it still needs an available Exa MCP configuration.
 
 | Tier | Platform | Entry Skill(s) | Script or adapter |
 | --- | --- | --- | --- |

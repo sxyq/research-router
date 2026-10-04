@@ -42,8 +42,8 @@ Agent-Reach 只作为能力参考，不作为第二个 Router：
 
 ## 选择规则
 
-1. 先将用户平台名称映射到 `registry/aliases.json`；裸 `x` 不映射到 Twitter/X。
+1. Agent 先根据语义选择平台；随后由 `registry/aliases.json` 将 Agent 提供的平台名称归一到 canonical id。别名只做名称归一，不把“源码”“教程”“评价”等语义映射成平台；裸 `x` 不映射到 Twitter/X。
 2. 读取对应平台 JSON，再读取所需 Skill 和 component；不要把目录中的所有平台都加载进当前任务。
-3. 平台对象中的 `depth_routes` 决定入口 Skill 顺序；同一平台内顺序执行。
+3. `scripts/route_plan.py` 从平台对象补全 `tier`、`scripts`、`search_components`、`adapter_type`、`access_mode` 和 `depth_routes`；平台对象中的 `depth_routes` 决定入口 Skill 顺序，同一平台内顺序执行。
 4. `medium` 和 `deep` 可以并行不同平台的 Agent；一个平台只分配一个 Agent。
 5. 外部 CLI/MCP 缺失、未登录或未获授权时，保留路由计划并报告 `runtime unavailable`，不把静态登记当成执行成功。
