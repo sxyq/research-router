@@ -12,14 +12,14 @@
       "platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow", "hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "twitter-x", "youtube", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
       "router_platforms": ["bilibili", "tiktok", "xiaohongshu", "linux-do", "v2ex", "academic", "stackoverflow", "youtube", "twitter-x"],
       "catalog_only_platforms": ["hacker-news", "dev-to", "lobsters", "reddit", "zhihu", "wikipedia", "bbc", "weibo", "douban", "weread", "xueqiu", "boss-zhipin", "facebook", "instagram", "jike", "google", "bloomberg", "medium", "substack", "linkedin", "yahoo-finance", "cursor", "notion", "chatgpt", "discord", "codex"],
-      "limits": ["GitHub is CLI passthrough rather than source analysis", "TikTok is not the same as Chinese Douyin", "Catalog-only platforms require the external AutoCLI runtime"],
+      "limits": ["GitHub is CLI passthrough rather than source analysis", "TikTok is not the same as Chinese Douyin", "Catalog-only routes provide bundled public discovery; richer native detail may need an external runtime"],
       "coverage_note": "The upstream README lists Arxiv; this Router normalizes it to the registered academic platform. Unnamed upstream sites remain outside the registry.",
       "status": "candidate-verified-source"
     },
     {
       "id": "github-local",
       "display_name": "Bundled GitHub Research",
-      "role": "Public repository discovery, README, tree, source, Issues, Releases, and commit metadata retrieval",
+      "role": "Public repository discovery plus multi-path README, tree, source, Issues, Releases, and commit evidence retrieval",
       "kind": "bundled-platform-skill",
       "source": "local:references/local/github-research/SKILL.md",
       "availability": "bundled",
@@ -27,8 +27,8 @@
       "platforms": ["github"],
       "tier": 1,
       "adapter_type": "local-script",
-      "scripts": ["scripts/github_public.py"],
-      "limits": ["Uses unauthenticated public GitHub REST API", "Agent performs source interpretation", "Public API rate limits apply"],
+      "scripts": ["scripts/github_public.py", "scripts/platform_discovery.py"],
+      "limits": ["Bundled REST requests are anonymous by default and use GITHUB_TOKEN or GH_TOKEN only when already configured", "Source preference is route snapshot, shallow snapshot, official archive, known-path raw, then limited REST Contents", "Git clone is skipped when reported repository size exceeds 512000 KiB and omits blobs above 8 MB", "One temporary snapshot is reused per repository in a deep route and removed at route end", "Archive snapshot caps are 64 MB compressed, 256 MB extracted, 20,000 files, and 8 MB per file; raw files are capped at 8 MB", "REST responses cap at 8 MB, file text at 40,000 characters, and tree output at 5,000 entries", "Agent performs source interpretation", "Public API and public endpoint rate limits apply", "An already-installed gh is optional and credentials are not persisted"],
       "status": "bundled"
     },
     {

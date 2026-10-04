@@ -18,7 +18,7 @@ Exa 是通用 search component，不属于平台 Tier。
 
 | 平台 | Tier | 首选入口 | 本地脚本或外部能力 | 边界 |
 | --- | ---: | --- | --- | --- |
-| GitHub | 1 | `github-local` | `scripts/github_public.py` | 仓库搜索、README、树、选定源码、依赖/配置、测试、Issues、Releases、commits；Agent 解释源码 |
+| GitHub | 1 | `github-local` | `scripts/github_public.py` + `scripts/platform_discovery.py` | REST 无结果/失败后可选 `gh`，再无候选用 `site:github.com`；源文件顺序为已有 route snapshot -> Git shallow snapshot -> 官方 archive -> 已知路径 raw -> 有限 REST Contents；Agent 解释源码 |
 | Academic | 1 | `academic-local` | `fast_search.py` + `academic_public.py` + `academic-evidence/` | OpenAlex、Crossref、arXiv、Scholar 发现和 metadata；公开 HTML 正文按需读取 |
 | Google Scholar | 1 | `academic-local` | `fast_search.py --provider google-scholar` + `academic_public.py` | Scholar 只做候选发现；转向公开 HTML 或主论文来源 |
 | Stack Overflow | 2 | `generic-platform-discovery` | `fast_search.py` 的 Stack Exchange API | 公开问题搜索；回答正文经选定页面读取 |
@@ -50,5 +50,7 @@ Agent-Reach 只作为能力参考，不作为第二个 Router：
 3. `scripts/route_plan.py` 从平台对象补全 `tier`、bundled `scripts`、`search_components`、`adapter_type`、`access_mode`、`depth_routes` 和 `optional_enhancements`。默认 `depth_routes` 只引用 `availability: bundled` 的 Skill。
 4. `medium` 和 `deep` 可以并行不同平台的 Agent；一个平台只分配一个 Agent。
 5. 可选 CLI/MCP/Skill 缺失时继续跑 bundled 路线并如实报告增强项不可用；不把外部缺失导致的降级算作 bundled adapter 失败。
+
+GitHub 的 REST 组件主要负责仓库检索、结构化信息、默认分支、size estimate、树元数据、Issue、Release、commit 和选定文件兜底；`repo` 命令的 README 是 light-read shortcut。深度 GitHub 路线对同一仓库只创建一个临时 snapshot，并在本地重复读取；路线结束时用 `cleanup --snapshot` 清理临时目录，平台 route record 保留实际使用过的 `retrieval_methods`。`gh`、`GITHUB_TOKEN` 和 `GH_TOKEN` 都是已有环境中的可选条件，不改变 `github-local` 的默认入口。Git shallow 上限为仓库 512,000 KiB、单个 blob 8 MB；REST 返回体最大 8 MB、文件文本最多 40,000 字符、树列表最多 5,000 项；archive 上限为压缩 64 MB、解压 256 MB、20,000 个文件且单文件 8 MB，raw 文件上限 8 MB。遇到截断或限流时继续下一个可用来源，否则报告缺口。
 
 泛站点公开发现采用 `site:domain query` 查询，不声称调用 Reddit、LinkedIn、Facebook、Instagram 等平台的原生 API。候选 URL 仍需逐条读取；需要账号或客户端会话的内容不属于 bundled 能力。

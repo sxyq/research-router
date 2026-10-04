@@ -2,7 +2,7 @@
 
 一个独立的 Codex Skill，用于把联网查询按“需求理解 → 交互模式 → 主场景 → Depth → 平台 → 子 Skill → 平台 Agent”组织起来。
 
-它适合放在 Codex 或其他支持 `SKILL.md` 的 Agent 宿主中，作为联网调研的入口。Agent 负责理解需求、选择路径和生成查询，Router 负责读取 Registry、补全平台分发包、汇总证据和记录路线经验，平台访问由命中的外部 Skill 完成。
+它适合放在 Codex 或其他支持 `SKILL.md` 的 Agent 宿主中，作为联网调研的入口。Agent 负责理解需求、选择路径和生成查询，Router 负责读取 Registry、补全平台分发包、汇总证据和记录路线经验；平台访问优先使用仓库内置适配器，外部 Skill 只提供可选增强。
 
 ## 为什么需要它
 
@@ -109,7 +109,7 @@ npx skills add sxyq/research-router --skill research-router
 | Bilibili 搜索、V2EX 公开 API、Discourse 搜索、52pojie 公开读取、雪球公开端点 | AutoCLI 和其他平台专项 Skill 的额外详情 |
 | 其他登记站点的免 Key 域名限定公开网页发现 | DDGS、Exa 等可扩展发现范围；YouTube 的 `yt-dlp` 字幕/详情；X 的 CLI/session |
 
-核心脚本不自动安装软件、不登录平台、不读取浏览器 Cookie。公开视频字幕、账号可见页面、付费 API 和桌面应用内容继续由用户本机已有的可选运行环境提供。
+核心脚本不自动安装软件、不登录平台、不读取浏览器 Cookie。GitHub REST 默认匿名访问；若 `GITHUB_TOKEN` 或 `GH_TOKEN` 已在环境中，适配器可选用该值；`gh` 只使用本机已有配置作为搜索补充。公开视频字幕、账号可见页面、付费 API 和桌面应用内容继续由用户本机已有的可选运行环境提供。
 
 本地手动使用：
 
@@ -194,7 +194,7 @@ research-router/
 
 | 平台 | Bundled light | Bundled medium | Bundled deep | 可选增强 |
 | --- | --- | --- | --- | --- |
-| GitHub | `github-local`: repo + README | 再读树、选定源码/配置/测试、Issues/Releases | 扩展到多组文件与近期 commits | `github-search`、`github-analyze`、`last30days-cn` |
+| GitHub | `github-local`: REST 检索与仓库字段；README 证据沿用源码获取顺序 | 复用 route snapshot；否则 shallow Git snapshot，再按需读取树、源码/配置/测试、Issues/Releases | 同一仓库一次临时 snapshot，多次本地读取；必要时 archive、已知路径 raw、有限 REST Contents | `github-search`、`github-analyze`、`last30days-cn`、已授权 `gh`/token |
 | Academic / Google Scholar | `academic-local`: 公共文献发现 | 补作者、venue、日期、摘要与选定来源 | 加入公开 HTML 正文段落和跨来源核对 | `anysearch`、`paper-research-router`、`literature-evidence-audit` |
 | Bilibili | `bilibili-public` 搜索 | 同一本地公开视频发现 | 更广查询与候选核对 | AutoCLI/last30days-cn；视频详情和字幕另需运行环境 |
 | V2EX | `v2ex-public` | 同一本地公开 API，按需读取帖子/回复 | 增加查询和主题覆盖 | AutoCLI、last30days-cn |
@@ -207,12 +207,16 @@ research-router/
 
 ## 免 Key 快速搜索
 
-平台与搜索组件的完整对应关系见 [registry/search-components.index.json](registry/search-components.index.json) 和 [references/platform-index.md](references/platform-index.md)。本地脚本使用公开 HTTP 接口，不读取 API Key、Cookie 或登录态，并只返回紧凑的发现结果：
+平台与搜索组件的完整对应关系见 [registry/search-components.index.json](registry/search-components.index.json) 和 [references/platform-index.md](references/platform-index.md)。本地脚本使用公开 HTTP 接口，不提示或写入凭据、不读取浏览器 Cookie，并只返回紧凑结果。GitHub 可选使用用户已设置的 `GITHUB_TOKEN` 或 `GH_TOKEN`，其余 provider 按各自 Registry 声明运行：
 
 ```bash
 python3 scripts/github_public.py search --query "skill router" --limit 5
+python3 scripts/github_public.py snapshot --repo owner/name
+# Substitute the `root` value returned by snapshot for this example path.
+python3 scripts/github_public.py local-tree --snapshot /temporary/path/repo
+python3 scripts/github_public.py local-file --snapshot /temporary/path/repo --path src/main.py
 python3 scripts/github_public.py repo --repo owner/name
-python3 scripts/github_public.py tree --repo owner/name
+python3 scripts/github_public.py cleanup --snapshot /temporary/path/repo
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider openalex --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "tool use token efficiency" --limit 5
@@ -222,7 +226,9 @@ python3 academic-evidence/scripts/academic_public.py read --url https://arxiv.or
 python3 scripts/platform_discovery.py --platform reddit --query "agent research workflow"
 ```
 
-`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`；GitHub 深度研究由 `github_public.py` 提供。OpenAlex 与 Crossref 返回作者、venue、DOI 等公开字段和可用摘要，arXiv 返回 Atom 摘要与 HTML/PDF URL。Google Scholar 返回公开结果片段，遇到挑战页即停止。`academic_public.py` 可按 DOI/arXiv ID 取 metadata，也能读取公开 HTML 正文并提取 Agent 指定的段落。Exa 是可选的 no-key MCP 组件，但仍要求已有 MCP 配置。
+`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`；GitHub 由 `github_public.py` 提供结构化 REST 信息和选定文件兜底，源文件优先沿用 `github-local` 的多路径获取顺序。OpenAlex 与 Crossref 返回作者、venue、DOI 等公开字段和可用摘要，arXiv 返回 Atom 摘要与 HTML/PDF URL。Google Scholar 返回公开结果片段，遇到挑战页即停止。`academic_public.py` 可按 DOI/arXiv ID 取 metadata，也能读取公开 HTML 正文并提取 Agent 指定的段落。Exa 是可选的 no-key MCP 组件，但仍要求已有 MCP 配置。
+
+GitHub 检索先用 bundled REST；无结果或请求失败时再尝试本机已装 `gh` 的现有配置，仍无候选时使用 `site:github.com` 公共发现。源文件获取顺序为已有 route snapshot、shallow Git snapshot、官方 archive、已知路径 `raw.githubusercontent.com`、有限 REST Contents。`snapshot` 会先尝试 shallow Git，再回退到官方 archive；深度路线对同一仓库只建立一个临时 snapshot，并在本地完成多次读取，路线结束时调用 `cleanup`。Git snapshot 只取一个提交、仅包含 8 MB 以内 blob，并要求 GitHub 报告仓库不超过 512,000 KiB；较大的仓库跳过 Git，改用受限 archive，再按需读取已知路径。`repo` 命令使用 REST README Contents 作为 light 读取捷径；需要源路径记录时，先建立/复用 snapshot，并在路线记录每个 GitHub 结果的 `retrieval_method`。REST 主要承担发现、结构化信息和选定文件兜底。REST 返回体上限 8 MB、正文输出上限 40,000 字符、树列表上限 5,000 项；archive 上限为压缩 64 MB、解压 256 MB、20,000 个文件且单文件 8 MB，raw 文件上限 8 MB。遇到截断、限流或访问失败时转下一个可用来源，仍无法读取就报告缺口。`gh` 与 token 不是默认条件，缺失时继续使用 bundled 路线。
 
 建议的执行链是：
 
@@ -419,7 +425,7 @@ Router 与子 Skill 分开评分。只有相似任务重复出现同一问题时
     {"stage": "stop", "value": "completed"}
   ],
   "platforms": [
-    {"platform_id": "github", "agent_id": "agent-github", "tier": 1, "depth": "medium", "queries": ["research-router alternatives source and tests"], "skill_order": ["github-local"], "scripts": ["scripts/github_public.py"], "search_components": ["github-public-rest"], "optional_enhancements": ["github-search", "github-analyze", "last30days-cn"]}
+    {"platform_id": "github", "agent_id": "agent-github", "tier": 1, "depth": "medium", "queries": ["research-router alternatives source and tests"], "skill_order": ["github-local"], "scripts": ["scripts/github_public.py", "scripts/platform_discovery.py"], "search_components": ["github-public-multipath"], "retrieval_methods": ["rest", "git-shallow", "local-snapshot"], "optional_enhancements": ["github-search", "github-analyze", "last30days-cn"]}
   ],
   "matched_skills": [
     {"skill_id": "github-local", "reason": "读取候选仓库、选定源码、配置和测试"}

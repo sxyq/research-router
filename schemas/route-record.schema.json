@@ -56,6 +56,7 @@
         "status": {"type": "string"},
         "scripts": {"type": "array", "items": {"type": "string"}},
         "search_components": {"type": "array", "items": {"type": "string"}},
+        "retrieval_methods": {"type": "array", "items": {"enum": ["rest", "git-shallow", "archive", "raw", "local-snapshot", "gh-cli", "generic-web-discovery"]}},
         "optional_enhancements": {"type": "array", "items": {"type": "string"}},
         "adapter_type": {"type": "string"},
         "access_mode": {"type": "string"},

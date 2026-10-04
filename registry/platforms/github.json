@@ -4,19 +4,19 @@
   "aliases": ["github", "git hub"],
   "tier": 1,
   "route_skills": ["github-local"],
-  "scripts": ["scripts/github_public.py"],
-  "search_components": ["github-public-rest", "fast-search", "github-search-api", "trafilatura"],
+  "scripts": ["scripts/github_public.py", "scripts/platform_discovery.py"],
+  "search_components": ["github-public-multipath", "trafilatura"],
   "adapter_type": "bundled-public-research",
   "access_mode": "public-repository",
   "status": "router-registered",
   "optional_enhancements": ["github-search", "github-analyze", "last30days-cn"],
-  "script_note": "Use github_public.py for repository search, metadata, README, tree, selected files, Issues, Releases, and commits; the Agent performs source analysis.",
+  "script_note": "Search with bundled REST first; on error or empty results, try an already-installed gh using its existing settings; if it also returns no candidates, use site:github.com. For source files prefer an existing route snapshot, shallow Git snapshot, official archive, known-path raw, then limited REST Contents. Git clone is skipped when the reported repository size exceeds 512000 KiB and blobs above 8 MB use raw/REST fallback. repo uses REST README Contents as a light-read shortcut; source route provenance should come from a snapshot or selected-file path. GITHUB_TOKEN/GH_TOKEN are optional and the REST adapter is anonymous by default.",
   "capabilities": ["repository discovery", "README reading", "tree inspection", "source analysis", "dependencies", "tests", "Issues", "Releases"],
   "depth_routes": {
     "light": ["github-local"],
     "medium": ["github-local"],
     "deep": ["github-local"]
   },
-  "source_requirement": "Source-level claims require reading selected repository files, tests, dependencies, and relevant project records; the Agent interprets fetched content.",
-  "agent_rule": "One GitHub Agent uses the bundled adapter at every depth and selects files according to the requested evidence depth."
+  "source_requirement": "Source-level claims require reading selected repository files, tests, dependencies, and relevant project records; the Agent interprets fetched content. Shallow Git snapshots are limited to repositories reported at 512000 KiB and omit blobs over 8 MB; archives are capped at 64 MB compressed, 256 MB extracted, 20,000 files, and 8 MB per file; raw files are capped at 8 MB. REST responses cap at 8 MB, file text at 40,000 characters, and tree output at 5,000 entries. For deep reads, reuse one temporary snapshot per repository, perform repeated local reads, and remove it at route end.",
+  "agent_rule": "One GitHub Agent uses the bundled route at every depth. Reuse one temporary snapshot per repository in deep routes and clean it at route end. gh and GITHUB_TOKEN/GH_TOKEN are optional; report the actual source path and any fallback or evidence gap."
 }

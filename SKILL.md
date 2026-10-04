@@ -80,7 +80,7 @@ The script contacts the repository at most once every seven days. It stores only
 8. Build one dispatch packet per selected platform. The Agent supplies the platform, goal, queries, evidence requirement, and stop condition. Registry resolution supplies the tier, bundled Skill order, script paths, search components, adapter type, access mode, depth routes, and optional enhancements. Missing optional enhancements must not mark the bundled platform route failed.
 9. If YouTube or Twitter/X was selected, run `scripts/probe_runtime.py` for only those selected platform IDs. This reads local executable state; it does not prove search worked. Do not probe at Router initialization, inspect browser cookies, run login commands, or start OpenCLI.
 10. Execute selected Skills. One Agent owns one platform; Skills within that platform run sequentially. `medium` and `deep` may run different platform Agents in parallel. The main Agent merges reports, removes duplicate sources, and reviews evidence.
-11. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record.
+11. Move the route through `planned` -> `running` -> `completed`, `partial`, or `failed`. Keep the requirement model, base `query_variants`, platform `queries`, `router_path`, `executed_leaf_skills`, `source_coverage`, `stop_reason`, and `route_evaluation` in the route record. For GitHub, record the used `retrieval_methods` on that platform route.
 12. Write one experience record per executed Skill and per selected platform under `records/experience/`. Use `scripts/update-experience.py` to derive JSONL entries from the route record. Keep raw result bodies, credentials, and browser state outside the record.
 13. Return a concise result with the answer, actual source scope, final Skill path, evidence gaps, route evaluation, and the next action if one is required. When the user later provides a score, write a matching file under `records/feedback/YYYY-MM-DD/`.
 
@@ -90,7 +90,7 @@ Use this table to map a platform to its bundled entry Skill and script. External
 
 | Tier | Platform | Entry Skill(s) | Script or adapter |
 | --- | --- | --- | --- |
-| 1 | GitHub | `github-local` | `scripts/github_public.py`; selected-file implementation analysis is performed by the Agent |
+| 1 | GitHub | `github-local` | `scripts/github_public.py` + `scripts/platform_discovery.py`; source order is route snapshot -> shallow Git snapshot -> official archive -> known-path raw -> limited REST Contents |
 | 1 | Academic | `academic-local` | `scripts/fast_search.py` + `academic-evidence/scripts/academic_public.py` |
 | 1 | Google Scholar | `academic-local` | `scripts/fast_search.py --provider google-scholar` + bundled metadata/HTML reader |
 | 2 | 52pojie / 吾爱破解 | `52pojie-research` | `references/local/52pojie-research/scripts/fetch.py` |
@@ -200,4 +200,5 @@ Read the relevant reference before applying details:
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
 - The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
 - GitHub routes use the bundled `github-local` Skill at all depths. Increase the read scope from repository overview/README to tree, selected source/config/test files, Issues, Releases, and commits according to the Agent's depth plan.
+- GitHub source retrieval prefers an existing route snapshot, then one temporary shallow snapshot per repository, then the official archive, known-path raw files, and finally limited REST Contents. Reuse the snapshot for repeated deep reads and remove it with `cleanup --snapshot` when the route ends. `gh`, `GITHUB_TOKEN`, and `GH_TOKEN` are optional; the bundled REST adapter uses anonymous requests by default and is for discovery, structured repository data, and selected-file fallback, not bulk source acquisition. Record the actual GitHub `retrieval_methods` in the platform route.
 - Academic routes use the bundled `academic-local` Skill at all depths. It combines public discovery, Crossref/arXiv metadata, and selected public HTML evidence. Use the existing PDF scripts when appropriate; `pypdf` is optional and is never installed automatically. `anysearch`, `paper-research-router`, and `literature-evidence-audit` are optional enhancements.

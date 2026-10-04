@@ -163,7 +163,10 @@ class RoutePlanTests(unittest.TestCase):
             [item["platform_id"] for item in resolved["platforms"]],
             ["github", "v2ex", "twitter-x"],
         )
-        self.assertEqual(resolved["platforms"][0]["scripts"], ["scripts/github_public.py"])
+        self.assertEqual(
+            resolved["platforms"][0]["scripts"],
+            ["scripts/github_public.py", "scripts/platform_discovery.py"],
+        )
         self.assertEqual(resolved["platforms"][1]["scripts"], ["scripts/v2ex_public.py"])
         self.assertEqual(
             resolved["platforms"][2]["scripts"],

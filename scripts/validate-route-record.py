@@ -11,6 +11,7 @@ from pathlib import Path
 SCENES = {"bug-fix", "open-source", "academic", "community"}
 MODES = {"direct", "clarify"}
 DEPTHS = {"light", "medium", "deep"}
+RETRIEVAL_METHODS = {"rest", "git-shallow", "archive", "raw", "local-snapshot", "gh-cli", "generic-web-discovery"}
 STATUSES = {"planned", "running", "completed", "partial", "failed"}
 SOURCE_STATUSES = {"verified", "partial", "unavailable"}
 EVALUATION_METHODS = {"manual", "heuristic", "combined"}
@@ -197,6 +198,12 @@ def validate_route(value: dict) -> list[str]:
                     or not all(isinstance(item, str) for item in platform[key])
                 ):
                     errors.append(f"platforms[{index}].{key} must be a string list")
+            if "retrieval_methods" in platform:
+                methods = platform["retrieval_methods"]
+                if not isinstance(methods, list) or not all(
+                    isinstance(method, str) and method in RETRIEVAL_METHODS for method in methods
+                ):
+                    errors.append(f"platforms[{index}].retrieval_methods contains an unsupported method")
             for key in ("adapter_type", "access_mode", "stop_condition"):
                 if key in platform and not isinstance(platform[key], str):
                     errors.append(f"platforms[{index}].{key} must be a string")

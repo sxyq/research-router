@@ -20,16 +20,16 @@
       "limits": ["Requires an available Exa MCP configuration", "Not a platform entry", "Use only after the selected platform and access conditions are known"]
     },
     {
-      "id": "github-public-rest",
-      "display_name": "Bundled GitHub Public REST Adapter",
+      "id": "github-public-multipath",
+      "display_name": "Bundled GitHub Multi-Path Retrieval",
       "kind": "local-platform-adapter",
       "source": "local:scripts/github_public.py",
       "requires_api_key": false,
       "status": "bundled",
       "platforms": ["github"],
-      "providers": ["repository-search", "metadata", "readme", "tree", "file", "issues", "releases", "commits"],
-      "output": ["title", "url", "description", "metadata", "source", "tests", "dependencies", "issues", "releases", "commits"],
-      "limits": ["Anonymous GitHub API quotas apply", "Agent selects and interprets source files", "Private repositories are not accessible"]
+      "providers": ["repository-search", "gh-repository-search", "generic-web-discovery", "metadata", "readme", "tree", "snapshot", "local-tree", "local-file", "local-find", "raw-file", "archive-fallback", "issues", "releases", "commits", "cleanup"],
+      "output": ["title", "url", "description", "metadata", "retrieval_method", "snapshot_root", "api_budget", "source", "tests", "dependencies", "issues", "releases", "commits"],
+      "limits": ["REST is anonymous by default; configured GITHUB_TOKEN or GH_TOKEN is optional", "Use REST primarily for repository search, structured metadata, tree metadata, Issues, Releases, and commits", "The repo command uses REST README Contents as a light-read shortcut; prefer source snapshot or selected-file provenance when needed", "Prefer a route snapshot, shallow snapshot, official archive, or known-path raw file before REST Contents for source analysis", "REST Contents is a selected-file fallback, not a bulk source reader; responses are capped at 8 MB and file text at 40,000 characters", "Archive snapshots are capped at 64 MB compressed, 256 MB extracted, 20,000 files, and 8 MB per file; raw files are capped at 8 MB", "Git shallow clone is skipped above the reported 512000 KiB repository-size limit and omits blobs above 8 MB", "Tree output is limited to 5,000 entries and may be marked truncated", "Anonymous GitHub API quotas apply; an already-installed gh is optional", "Private repositories are not accessible without authorized access"]
     },
     {
       "id": "academic-public-evidence",

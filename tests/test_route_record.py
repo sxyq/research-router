@@ -43,6 +43,7 @@ class RouteRecordTests(unittest.TestCase):
                     "tier": 1,
                     "queries": ["research-router repository source code"],
                     "skill_order": ["github-search", "github-analyze"],
+                    "retrieval_methods": ["rest", "git-shallow", "local-snapshot"],
                 }
             ],
             "router_path": [{"stage": "requirement"}],
@@ -71,6 +72,13 @@ class RouteRecordTests(unittest.TestCase):
         route["platforms"][0]["queries"] = [""]
         errors = MODULE.validate_route(route)
         self.assertTrue(any("queries" in error for error in errors))
+
+    def test_platform_retrieval_methods_are_recorded_and_bounded(self):
+        route = self.route()
+        route["platforms"][0]["retrieval_methods"] = ["rest", "raw", "local-snapshot"]
+        self.assertEqual(MODULE.validate_route(route), [])
+        route["platforms"][0]["retrieval_methods"] = ["unknown"]
+        self.assertTrue(any("retrieval_methods" in error for error in MODULE.validate_route(route)))
 
     def test_requirement_is_required(self):
         route = self.route()
@@ -135,6 +143,7 @@ class RouteRecordTests(unittest.TestCase):
             lambda item: item["platforms"][0].update(queries=[]),
             lambda item: item["query_variants"].__setitem__(0, "   "),
             lambda item: item["requirement"].update(target="   "),
+            lambda item: item["platforms"][0].update(retrieval_methods=["unknown"]),
         ):
             invalid = self.route()
             mutate(invalid)
