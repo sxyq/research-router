@@ -37,6 +37,8 @@ python3 scripts/fast_search.py --provider ddgs --query "public web research API"
 
 没有安装 `ddgs` 时，脚本会返回 `status: unavailable`，不会自动改用带凭据的服务。
 
+Exa 登记为可选的 `exa-mcp` search component，不属于平台，也不进入默认免 Key 路径。只有当前环境已经提供 Exa MCP 配置时才调用。
+
 ## 独立平台适配器
 
 平台有自己的公开 HTTP/API 结构时，不把逻辑塞入 `fast_search.py`。按平台 Registry 直接调用独立脚本：

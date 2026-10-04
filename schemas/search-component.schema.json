@@ -25,7 +25,7 @@
           "display_name": {"type": "string"},
           "kind": {"type": "string"},
           "source": {"type": "string"},
-          "requires_api_key": {"const": false},
+          "requires_api_key": {"type": "boolean"},
           "status": {"type": "string"},
           "platforms": {"type": "array", "items": {"type": "string"}},
           "providers": {"type": "array", "items": {"type": "string"}},

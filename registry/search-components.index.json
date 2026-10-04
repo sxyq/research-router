@@ -8,6 +8,18 @@
   },
   "components": [
     {
+      "id": "exa-mcp",
+      "display_name": "Exa MCP search",
+      "kind": "external-mcp",
+      "source": "https://docs.exa.ai/reference/exa-mcp",
+      "requires_api_key": true,
+      "status": "optional-runtime",
+      "platforms": [],
+      "providers": ["exa"],
+      "output": ["title", "url", "excerpt", "published_at", "source"],
+      "limits": ["Requires an available Exa MCP configuration", "Not a platform entry", "Use only after the selected platform and access conditions are known"]
+    },
+    {
       "id": "bilibili-public-api",
       "display_name": "Bilibili public video search API",
       "kind": "local-platform-adapter",

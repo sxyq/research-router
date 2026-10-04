@@ -111,8 +111,8 @@ def main() -> int:
         for field in ("id", "display_name", "kind", "source", "requires_api_key", "status", "platforms", "providers", "output", "limits"):
             if field not in component:
                 errors.append(f"{label}: missing {field}")
-        if component.get("requires_api_key") is not False:
-            errors.append(f"{label}: requires_api_key must be false")
+        if not isinstance(component.get("requires_api_key"), bool):
+            errors.append(f"{label}: requires_api_key must be boolean")
         for platform_id in component.get("platforms", []):
             if platform_id not in component_platform_ids:
                 errors.append(f"{label}: unknown platform {platform_id!r}")
