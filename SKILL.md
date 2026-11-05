@@ -96,7 +96,7 @@ The script stores only local update state, preserves `records/`, `tuning/`, and 
 
 ## Platform quick index
 
-Use this table to map a platform to its bundled entry Skill and script. External Skills, CLIs, or MCPs appear in `optional_enhancements` and can add coverage when already available; they are not required by the default route. Bundled discovery scripts use public endpoints and need no API key. Exa is an optional no-key MCP component, not a platform; it still needs an existing Exa MCP configuration.
+Use this table to map a platform to its bundled entry Skill and script. External Skills, CLIs, or MCPs appear in `optional_enhancements` and can add coverage when already available; they are not required by the default route. Anonymous discovery remains available; academic APIs may use configured keys, while SerpApi Scholar is selected explicitly. Exa is an optional no-key MCP component, not a platform; it still needs an existing Exa MCP configuration.
 
 | Tier | Platform | Entry Skill(s) | Script or adapter |
 | --- | --- | --- | --- |
@@ -118,9 +118,9 @@ Use this table to map a platform to its bundled entry Skill and script. External
 
 Other catalog platforms use the bundled `generic-platform-discovery` route for domain-constrained public candidate discovery. Their platform-native detail, account pages, and desktop actions remain optional. `registry/platform-domains.json` records the domains and any bundled native public provider.
 
-## No-key quick search components
+## Public and optional API search components
 
-The component-to-platform mapping is maintained in `registry/search-components.index.json`. Use `scripts/fast_search.py` for compact public discovery without credentials:
+The component-to-platform mapping is maintained in `registry/search-components.index.json`. Use `scripts/fast_search.py` for compact discovery; anonymous providers remain available, with optional account-backed sources selected for the task:
 
 ```bash
 python3 scripts/github_public.py search --query "skill router" --limit 5
@@ -130,11 +130,11 @@ python3 scripts/fast_search.py --provider google-scholar --query "agentic search
 python3 scripts/fast_search.py --provider discourse --base-url https://users.rust-lang.org --query "webview bridge" --limit 5
 ```
 
-Supported public providers include Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Crossref, arXiv, Google Scholar, Discourse, RSS/Atom, and optional `ddgs`. GitHub source research uses `github_public.py`; results include repository metadata, README, tree, selected files, Issues, Releases, and commit metadata. Search results are discovery evidence until the Agent reads selected sources. Google Scholar may return snippets only.
+Supported public providers include Stack Exchange, Hacker News, Dev.to, Wikipedia, OpenAlex, Semantic Scholar, PubMed, Crossref, arXiv, Google Scholar, Discourse, RSS/Atom, and optional `ddgs`. `serpapi-scholar` is an optional third-party Scholar provider requiring `SERPAPI_API_KEY`; it is not an automatic fallback. GitHub source research uses `github_public.py`; results include repository metadata, README, tree, selected files, Issues, Releases, and commit metadata. Search results are discovery evidence until the Agent reads selected sources. Scholar providers may return snippets only.
 
 For registered platforms without a bundled native endpoint, `scripts/platform_discovery.py --platform <id> --query "..."` uses Bing RSS with a public DuckDuckGo HTML fallback, constrains the query to Registry domains, and filters links by those domains. It finds public candidate URLs only; it does not claim native APIs or account access.
 
-`ddgs`, SearXNG, Semantic Scholar, and content-extraction packages are registered as optional no-key candidates. Their availability, rate limits, or package installation must be confirmed at runtime. Paid or credentialed services are outside this default path.
+`ddgs`, SearXNG, and content-extraction packages remain optional runtime enhancements. Academic API providers use the existing script and standard library; API keys do not become a prerequisite for the anonymous route. Do not install packages, create accounts, or purchase access as part of discovery.
 
 For academic requests, keep the retrieval stages separate:
 
@@ -143,6 +143,8 @@ discovery -> selected papers -> paper-brief -> explicit full-audit
 ```
 
 Use `paper-brief` for an abstract, section outline, and author-stated contributions. Use `academic-evidence/scripts/extract_paper_brief.py` for a local PDF. Run the full evidence route only when the user asks for detailed methods, results, limitations, or quotations. This sequence applies to the general `academic` route as well as Google Scholar.
+
+Read [academic-local](references/local/academic-research/SKILL.md) for source roles, API access, and citation-chain commands. Select complementary sources for subject, language, publication type, and citation coverage within the user's platform scope. Keep the returned subset, source-reported query total, and field-wide coverage distinct; few or zero results do not establish a research gap or novelty. The new providers stay inside the existing academic route and reuse its selected-paper reading path.
 
 ## Route lifecycle and platform dispatch
 
@@ -199,7 +201,7 @@ Read the relevant reference before applying details:
 - [deduplication.md](references/deduplication.md)
 - [scoring-policy.md](references/scoring-policy.md)
 - [failure-attribution.md](references/failure-attribution.md)
-- [search-components.md](references/search-components.md) when using the no-key public search adapters
+- [search-components.md](references/search-components.md) when using public or optional API search adapters
 
 ## Boundaries
 
@@ -208,7 +210,7 @@ Read the relevant reference before applying details:
 - Do not copy external Skills into this directory. Resolve an installed Skill by its canonical name/path, or report it unavailable and ask before installation.
 - Agent-Reach is a reference for platform capabilities, not a second Router. Absorb only useful adapters: Bilibili public search, V2EX public API reads, Xueqiu public endpoints, and external-tool mappings for YouTube and Twitter/X. Do not copy its global trigger rules or run its all-channel diagnosis as a routine route step.
 - Do not write route records, private credentials, browser cookies, or raw research caches into a project directory.
-- The bundled quick-search script sends no API keys, cookies, or login data. Respect public endpoint rate limits and stop on authentication, access, or rate-limit responses.
+- The bundled quick-search script reads configured API keys only for the selected provider; it does not read browser cookies or login data. Respect endpoint rate limits and report authentication, access, or rate-limit failures without automatically switching sources.
 - GitHub routes use the bundled `github-local` Skill at all depths. Increase the read scope from repository overview/README to tree, selected source/config/test files, Issues, Releases, and commits according to the Agent's depth plan.
 - GitHub source retrieval prefers an existing route snapshot, then one temporary shallow snapshot per repository, then the official archive, known-path raw files, and finally limited REST Contents. Reuse the snapshot for repeated deep reads and remove it with `cleanup --snapshot` when the route ends. `gh`, `GITHUB_TOKEN`, and `GH_TOKEN` are optional; the bundled REST adapter uses anonymous requests by default and is for discovery, structured repository data, and selected-file fallback, not bulk source acquisition. Record the actual GitHub `retrieval_methods` in the platform route.
 - Academic routes use the bundled `academic-local` Skill at all depths. It combines public discovery, Crossref/arXiv metadata, and selected public HTML evidence. Use the existing PDF scripts when appropriate; `pypdf` is optional and is never installed automatically. `anysearch`, `paper-research-router`, and `literature-evidence-audit` are optional enhancements.

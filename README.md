@@ -105,7 +105,7 @@ npx skills add sxyq/research-router --skill research-router
 | 随仓库提供 | 可选增强 |
 | --- | --- |
 | GitHub API 搜索、README、树、选定源码、依赖/配置、测试、Issues、Releases、commits | `github-search`、`github-analyze`、`last30days-cn` |
-| OpenAlex、Crossref、arXiv、Google Scholar 发现；作者/venue/年份/摘要；公开 HTML 论文段落 | `anysearch`、`paper-research-router`、`literature-evidence-audit`；已有 `pypdf` 时可读取下载的 PDF |
+| OpenAlex、Semantic Scholar、PubMed、Crossref、arXiv、公开 Scholar 发现；题录/可用摘要、引用链和公开 HTML 论文段落 | 已有 key 的 SerpApi Scholar；`anysearch`、`paper-research-router`、`literature-evidence-audit`；已有 `pypdf` 时可读取下载的 PDF |
 | Bilibili 搜索、V2EX 公开 API、Discourse 搜索、52pojie 公开读取、雪球公开端点 | AutoCLI 和其他平台专项 Skill 的额外详情 |
 | 其他登记站点的免 Key 域名限定公开网页发现 | DDGS、Exa 等可扩展发现范围；YouTube 的 `yt-dlp` 字幕/详情；X 的 CLI/session |
 
@@ -216,7 +216,7 @@ research-router/
 
 外部 Skill 均由 `optional_enhancements` 字段单独列出；它们缺失时继续执行 bundled Skill 和本地脚本，不把该平台标为失败。
 
-## 免 Key 快速搜索
+## 公开搜索与可选 API
 
 平台与搜索组件的完整对应关系见 [registry/search-components.index.json](registry/search-components.index.json) 和 [references/platform-index.md](references/platform-index.md)。本地脚本使用公开 HTTP 接口，不提示或写入凭据、不读取浏览器 Cookie，并只返回紧凑结果。GitHub 可选使用用户已设置的 `GITHUB_TOKEN` 或 `GH_TOKEN`，其余 provider 按各自 Registry 声明运行：
 
@@ -230,6 +230,8 @@ python3 scripts/github_public.py repo --repo owner/name
 python3 scripts/github_public.py cleanup --snapshot /temporary/path/repo
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider openalex --query "agentic search" --limit 5
+python3 scripts/fast_search.py --provider semantic-scholar --query "large language models peer review" --limit 5
+python3 scripts/fast_search.py --provider pubmed --query "large language models peer review" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "tool use token efficiency" --limit 5
 python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
 python3 academic-evidence/scripts/academic_public.py metadata --arxiv 2401.12345
@@ -237,7 +239,16 @@ python3 academic-evidence/scripts/academic_public.py read --url https://arxiv.or
 python3 scripts/platform_discovery.py --platform reddit --query "agent research workflow"
 ```
 
-`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Crossref、arXiv、Google Scholar、Discourse、RSS/Atom 和可选 `ddgs`；GitHub 由 `github_public.py` 提供结构化 REST 信息和选定文件兜底，源文件优先沿用 `github-local` 的多路径获取顺序。OpenAlex 与 Crossref 返回作者、venue、DOI 等公开字段和可用摘要，arXiv 返回 Atom 摘要与 HTML/PDF URL。Google Scholar 返回公开结果片段，遇到挑战页即停止。`academic_public.py` 可按 DOI/arXiv ID 取 metadata，也能读取公开 HTML 正文并提取 Agent 指定的段落。Exa 是可选的 no-key MCP 组件，但仍要求已有 MCP 配置。
+`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Semantic Scholar、PubMed、Crossref、arXiv、公开 Scholar、可选 SerpApi Scholar、Discourse、RSS/Atom 和可选 `ddgs`。新增学术来源沿用同一入口和结果字段，不另建平台、Skill 或调度链。GitHub 仍由 `github_public.py` 提供结构化信息和选定文件读取。API 题录、摘要和 Scholar 片段用于发现；方法和实验结论继续读取选定论文的公开正文或 PDF。
+
+| 数据源 | Provider | 凭据变量 | 使用范围 |
+| --- | --- | --- | --- |
+| OpenAlex | `openalex` | 可选 `OPENALEX_API_KEY` | 广泛发现；分页与匹配总数，返回费用字段时保留 |
+| Semantic Scholar | `semantic-scholar` | 可选 `SEMANTIC_SCHOLAR_API_KEY` | 论文发现；`--paper-id` 配合 `--relation references/citations` 读取引用链 |
+| PubMed | `pubmed` | 可选 `NCBI_API_KEY` | 生物医学题录和可用摘要 |
+| SerpApi Google Scholar | `serpapi-scholar` | 必需 `SERPAPI_API_KEY` | 明确选用时消耗该账号额度；保留原公开 Scholar 入口 |
+
+凭据只从进程环境读取，不打印、不写入源码；脚本不自动加载 `.env`。SerpApi 不作为失败后的自动替代来源。数据源总量、价格和额度以调用时的官方文档为准，少量结果不据此认定研究空白。中文核心期刊和学位论文仍按需求补充知网、万方或用户可访问的来源。
 
 GitHub 检索先用 bundled REST；无结果或请求失败时再尝试本机已装 `gh` 的现有配置，仍无候选时使用 `site:github.com` 公共发现。源文件获取顺序为已有 route snapshot、shallow Git snapshot、官方 archive、已知路径 `raw.githubusercontent.com`、有限 REST Contents。`snapshot` 会先尝试 shallow Git，再回退到官方 archive；深度路线对同一仓库只建立一个临时 snapshot，并在本地完成多次读取，路线结束时调用 `cleanup`。Git snapshot 只取一个提交、仅包含 8 MB 以内 blob，并要求 GitHub 报告仓库不超过 512,000 KiB；较大的仓库跳过 Git，改用受限 archive，再按需读取已知路径。`repo` 命令使用 REST README Contents 作为 light 读取捷径；需要源路径记录时，先建立/复用 snapshot，并在路线记录每个 GitHub 结果的 `retrieval_method`。REST 主要承担发现、结构化信息和选定文件兜底。REST 返回体上限 8 MB、正文输出上限 40,000 字符、树列表上限 5,000 项；archive 上限为压缩 64 MB、解压 256 MB、20,000 个文件且单文件 8 MB，raw 文件上限 8 MB。遇到截断、限流或访问失败时转下一个可用来源，仍无法读取就报告缺口。`gh` 与 token 不是默认条件，缺失时继续使用 bundled 路线。
 
@@ -252,7 +263,7 @@ GitHub 检索先用 bundled REST；无结果或请求失败时再尝试本机已
   -> 证据状态与路线记录
 ```
 
-`platform_discovery.py` 为没有本地原生搜索 API 的登记站点提供 `site:domain` 公共网页发现，不需要 `ddgs`。这条能力用于找到公开候选链接，不等于平台原生搜索或登录内容读取。搜索服务可能拒绝或限流；脚本会返回 `partial`/`unavailable`。DDGS、SearXNG、Semantic Scholar、`trafilatura`、`readability-lxml` 和 Exa 都是可选增强项。
+`platform_discovery.py` 为没有本地原生搜索 API 的登记站点提供 `site:domain` 公共网页发现，不需要 `ddgs`。这条能力用于找到公开候选链接，不等于平台原生搜索或登录内容读取。搜索服务可能拒绝或限流；脚本会返回 `partial`/`unavailable`。DDGS、SearXNG、`trafilatura`、`readability-lxml` 和 Exa 仍是可选增强项。
 
 学术查询统一按下面的阶段推进：
 
@@ -260,7 +271,7 @@ GitHub 检索先用 bundled REST；无结果或请求失败时再尝试本机已
 discovery -> selected papers -> paper-brief -> explicit full-audit
 ```
 
-先用 Scholar、OpenAlex、arXiv 或 Crossref 找候选；选定论文后，通过 `academic_public.py` 取 metadata/摘要并读取公开 HTML 段落。arXiv HTML 可用时优先使用；出版方只提供 PDF 时，可用现有 PDF 脚本和环境中已安装的 `pypdf`，否则清楚说明缺口。不会自动安装 `pypdf`。`extract_paper_brief.py` 仍用于本地 PDF brief。
+按学科、语言和引用覆盖选用 Scholar、OpenAlex、Semantic Scholar、PubMed、arXiv 或 Crossref；选定论文后，继续使用 `academic_public.py` 和现有 PDF 脚本读取来源。arXiv HTML 可用时优先使用；`pypdf` 未安装时说明 PDF 提取缺口，不自动安装。`extract_paper_brief.py` 仍用于本地 PDF brief。
 
 详细调用方式见 [references/search-components.md](references/search-components.md)。
 

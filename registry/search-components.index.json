@@ -111,9 +111,9 @@
       "requires_api_key": false,
       "status": "local-included",
       "platforms": ["github", "stackoverflow", "hacker-news", "dev-to", "wikipedia", "academic", "discourse"],
-      "providers": ["github", "stackoverflow", "hacker-news", "dev-to", "wikipedia", "openalex", "crossref", "arxiv", "discourse", "rss"],
+      "providers": ["github", "stackoverflow", "hacker-news", "dev-to", "wikipedia", "openalex", "semantic-scholar", "pubmed", "serpapi-scholar", "crossref", "arxiv", "google-scholar", "discourse", "rss"],
       "output": ["title", "url", "published_at", "excerpt", "source", "match_reason", "evidence_level"],
-      "limits": ["Public endpoints can rate-limit or change without notice", "Results are discovery evidence until the selected source is read"]
+      "limits": ["Public endpoints can rate-limit or change without notice", "Results are discovery evidence until the selected source is read", "SerpApi is selected explicitly and requires its account key; anonymous providers remain available"]
     },
     {
       "id": "ddgs",
@@ -203,13 +203,13 @@
       "id": "openalex-api",
       "display_name": "OpenAlex Works API",
       "kind": "public-http-api",
-      "source": "https://docs.openalex.org/api-entities/works",
+      "source": "https://help.openalex.org/api/",
       "requires_api_key": false,
-      "status": "candidate-no-key",
+      "status": "local-included-via-fast-search",
       "platforms": ["academic", "google-scholar"],
       "providers": ["openalex"],
-      "output": ["title", "url", "authors", "venue", "publication_date", "cited_by_count"],
-      "limits": ["Public access can return 429", "Metadata and citation counts do not replace paper body evidence"]
+      "output": ["title", "url", "authors", "venue", "published_at", "citation_count", "search_metadata"],
+      "limits": ["Configured OPENALEX_API_KEY is optional and sent in the Authorization header", "One requested page per call, up to 100 records; source-reported totals and request metadata are preserved", "Anonymous and authenticated API budgets apply; access can return 429", "Query totals do not establish literature coverage or novelty", "Metadata and citation counts do not replace paper body evidence"]
     },
     {
       "id": "arxiv-api",
@@ -253,11 +253,35 @@
       "kind": "public-http-api",
       "source": "https://api.semanticscholar.org/api-docs/",
       "requires_api_key": false,
-      "status": "candidate-no-key-rate-limited",
+      "status": "local-included-via-fast-search",
       "platforms": ["academic", "google-scholar"],
       "providers": ["semantic-scholar"],
-      "output": ["title", "url", "year", "citations", "references"],
-      "limits": ["No-key access can return 429", "Use as a supplement, not the only academic source"]
+      "output": ["title", "url", "published_at", "authors", "doi", "paper_id", "citation_count", "abstract", "pdf_url", "search_metadata"],
+      "limits": ["SEMANTIC_SCHOLAR_API_KEY is optional; anonymous calls share a rate-limit pool", "Relevance search exposes at most 1,000 ranked matches; --paper-id with --relation references or citations reads the corresponding paginated edges", "Abstracts may be unavailable; citation counts are source-specific", "Use as a complement selected for the research question"]
+    },
+    {
+      "id": "pubmed-api",
+      "display_name": "PubMed E-utilities",
+      "kind": "public-http-api",
+      "source": "https://www.ncbi.nlm.nih.gov/books/NBK25497/",
+      "requires_api_key": false,
+      "status": "local-included-via-fast-search",
+      "platforms": ["academic", "google-scholar"],
+      "providers": ["pubmed"],
+      "output": ["title", "url", "published_at", "authors", "venue", "doi", "pmid", "abstract", "pmc_url", "search_metadata"],
+      "limits": ["NCBI_API_KEY is optional; E-utilities rate limits apply", "ESearch discovers one page and EFetch retrieves those records' metadata and available abstracts", "PubMed metadata and abstracts do not imply full-text access"]
+    },
+    {
+      "id": "serpapi-scholar-api",
+      "display_name": "SerpApi Google Scholar",
+      "kind": "public-http-api",
+      "source": "https://serpapi.com/google-scholar-api",
+      "requires_api_key": true,
+      "status": "local-included-optional-credentials",
+      "platforms": ["academic", "google-scholar"],
+      "providers": ["serpapi-scholar"],
+      "output": ["title", "url", "published_at", "authors", "publication_info", "citation_count", "version_count", "pdf_url", "abstract_status", "search_metadata"],
+      "limits": ["Requires SERPAPI_API_KEY; uses that account's allowance only when this provider is selected", "Third-party Scholar results, not an official Google Scholar API", "One page per request, up to 20 records; totals are estimates and snippets are not full abstracts", "Keep the existing public google-scholar provider available; no automatic paid fallback"]
     },
     {
       "id": "rss-atom",

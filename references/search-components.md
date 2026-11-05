@@ -1,6 +1,6 @@
-# 免 Key 搜索组件
+# 公开搜索组件
 
-本参考说明 `registry/search-components.index.json` 中的公开搜索组件如何调用。它们只做快速发现，默认返回紧凑 JSON，不保存原始网页，也不需要 API Key、Cookie 或登录态。
+本参考说明 `registry/search-components.index.json` 中的搜索组件如何调用。它们只做快速发现，默认返回紧凑 JSON，不保存原始网页。多数内置 provider 支持匿名访问；OpenAlex、Semantic Scholar、PubMed 可使用进程环境中已有的 key。SerpApi Scholar 需要 key，只在选用该服务时调用。脚本不读取浏览器 Cookie 或登录态。
 
 ## 本地统一入口
 
@@ -11,6 +11,8 @@ python3 scripts/github_public.py search --query "skill router" --limit 5
 python3 scripts/fast_search.py --provider stackoverflow --query "python async http" --limit 5
 python3 scripts/fast_search.py --provider hacker-news --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider openalex --query "tool use language model" --limit 5
+python3 scripts/fast_search.py --provider semantic-scholar --query "tool use language model" --limit 5
+python3 scripts/fast_search.py --provider pubmed --query "large language models peer review" --limit 5
 python3 scripts/fast_search.py --provider arxiv --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider crossref --query "agentic search" --limit 5
 python3 scripts/fast_search.py --provider google-scholar --query "agentic search" --limit 5
@@ -86,10 +88,14 @@ python3 academic-evidence/scripts/academic_public.py read --url https://arxiv.or
 
 | Provider | 阶段 | 作用 | 后续步骤 |
 | --- | --- | --- | --- |
-| `openalex` | 发现 | 搜索论文、作者、期刊和引用数量 | 读取论文页面或 PDF |
+| `openalex` | 发现 | 搜索论文元数据；支持可选 key、分页、匹配总数与引用数量 | 读取论文页面或 PDF；返回数量不代表领域文献总量 |
 | `arxiv` | 发现 | 查询预印本标题、摘要和链接 | 下载或读取 PDF |
 | `crossref` | 元数据 | 查询 DOI、作者、出版时间和期刊 | 进入 DOI 或出版方页面 |
-| `semantic-scholar` | 补充 | 语义相近论文、引用和参考文献 | 受到限流时切回 OpenAlex/arXiv |
+| `semantic-scholar` | 发现与引用链 | 搜索论文；用 `--paper-id` 和 `--relation references/citations` 读取引用关系 | 读取选定论文正文；摘要可能缺失，引用数属于该数据源 |
+| `pubmed` | 生物医学发现 | ESearch 分页发现，EFetch 获取这些论文的题录和可用摘要 | 通过 DOI、PubMed 或 PMC 链接读取选定来源 |
+| `serpapi-scholar` | 可选 Scholar 发现 | 已配置 `SERPAPI_API_KEY` 时读取第三方 Scholar 结果 | 保留公开 Scholar 入口；不自动切换，不把片段当全文 |
+
+学科、中文文献、凭据变量和调用示例见 [academic-local](local/academic-research/SKILL.md)。API 价格、额度与访问要求以调用时的官方文档为准。各学术来源仍属于同一 `academic-local` 路线，结果数量与数据源匹配总数分别说明。
 
 Google Scholar 没有稳定的官方免 Key API；本地 provider 低频访问公开结果页，遇到 403、429、验证码或挑战页就停止。它返回的 `gs_rs` 内容是摘要片段，通常不等于完整摘要。选定论文后按下面的阶段处理：
 
@@ -124,7 +130,7 @@ python3 academic-evidence/scripts/extract_paper_brief.py path/to/paper.pdf
 
 ## 访问边界
 
-- 公共 API、RSS 和 JSON 接口可以免 Key 调用，但仍受站点频率限制和服务状态影响。
+- 支持匿名调用的 API、RSS 和 JSON 接口仍受站点频率限制和服务状态影响；可选凭据不会变成默认研究路线的必备条件。
 - GitHub、Stack Exchange、OpenAlex、arXiv 和公共论坛都可能返回 429；遇到限流时记录 `partial` 或 `unavailable`。
 - SearXNG公共实例不纳入默认脚本，因为实例是否开放 JSON、证书状态和延迟各不相同。
 - Tavily、私有 Reddit API 等需要凭据的服务不进入默认路径。Exa 不在 Registry 中要求 API Key，但没有可用的 Exa MCP 配置时仍报告不可用。

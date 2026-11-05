@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run compact, public, no-key research searches.
+"""Run compact research searches through public endpoints.
 
 The script intentionally returns discovery records instead of raw pages. Use a
 platform-specific reader or a selected source URL for the next evidence step.
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -53,12 +54,14 @@ def request_bytes(
     params: dict[str, object] | None,
     timeout: float,
     accept: str = "application/json",
+    headers: dict[str, str] | None = None,
 ) -> bytes:
+    endpoint = url
     if params:
         url = f"{url}?{urlencode(params, doseq=True)}"
     request = Request(
         url,
-        headers={"User-Agent": USER_AGENT, "Accept": accept},
+        headers={"User-Agent": USER_AGENT, "Accept": accept, **(headers or {})},
     )
     try:
         with urlopen(request, timeout=timeout) as response:
@@ -66,19 +69,20 @@ def request_bytes(
     except HTTPError as exc:
         retry_after = exc.headers.get("Retry-After")
         suffix = f"; retry-after={retry_after}" if retry_after else ""
-        raise SearchError(f"HTTP {exc.code} from {url}{suffix}") from exc
+        raise SearchError(f"HTTP {exc.code} from {endpoint}{suffix}") from exc
     except URLError as exc:
-        raise SearchError(f"network error for {url}: {exc.reason}") from exc
+        raise SearchError(f"network error for {endpoint}: {exc.reason}") from exc
     except TimeoutError as exc:
-        raise SearchError(f"timeout for {url}") from exc
+        raise SearchError(f"timeout for {endpoint}") from exc
 
 
 def request_json(
     url: str,
     params: dict[str, object] | None,
     timeout: float,
+    headers: dict[str, str] | None = None,
 ) -> dict | list:
-    payload = request_bytes(url, params, timeout)
+    payload = request_bytes(url, params, timeout, headers=headers)
     try:
         return json.loads(payload.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -236,11 +240,17 @@ def search_wikipedia(args: argparse.Namespace) -> list[dict[str, object]]:
 
 
 def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
+    api_key = os.environ.get("OPENALEX_API_KEY")
     data = request_json(
         "https://api.openalex.org/works",
-        {"search": args.query, "per-page": args.limit},
+        {"search": args.query, "per_page": args.limit, "page": args.page},
         args.timeout,
+        headers={"Authorization": f"Bearer {api_key}"} if api_key else None,
     )
+    args.search_metadata = {
+        key: value for key, value in data["meta"].items()
+        if key in {"count", "page", "per_page", "cost_usd"}
+    }
     results = []
     for item in data.get("results", [])[: args.limit]:
         location = item.get("primary_location") or {}
@@ -272,6 +282,7 @@ def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
                     "authors": authors,
                     "venue": source.get("display_name"),
                     "doi": item.get("doi"),
+                    "citation_count": item.get("cited_by_count"),
                     "abstract": clean_text(abstract, 1800),
                     "open_access": (item.get("open_access") or {}).get("is_oa"),
                     "pdf_url": best_location.get("pdf_url") if isinstance(best_location, dict) else None,
@@ -322,6 +333,145 @@ def search_crossref(args: argparse.Namespace) -> list[dict[str, object]]:
                 },
             )
         )
+    return results
+
+
+def search_semantic_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
+    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+    endpoint = "https://api.semanticscholar.org/graph/v1/paper/search"
+    params = {
+        "query": args.query, "offset": (args.page - 1) * args.limit,
+        "limit": args.limit,
+        "fields": "title,url,authors,year,venue,abstract,citationCount,externalIds,openAccessPdf",
+    }
+    if args.paper_id:
+        endpoint = f"https://api.semanticscholar.org/graph/v1/paper/{quote(args.paper_id, safe='')}/{args.relation}"
+        del params["query"]
+    data = request_json(endpoint, params, args.timeout, headers={"x-api-key": api_key} if api_key else None)
+    args.search_metadata = {"page": args.page, "per_page": args.limit}
+    for field, output in (("total", "count"), ("offset", "offset"), ("next", "next_offset")):
+        if field in data:
+            args.search_metadata[output] = data[field]
+    papers = data["data"]
+    if papers is None:
+        raise SearchError("Semantic Scholar did not expose the requested records; missing data is not an empty reference list")
+    if args.paper_id:
+        field = "citedPaper" if args.relation == "references" else "citingPaper"
+        papers = [item[field] for item in papers]
+    return [
+        record(
+            item.get("title"), item.get("url"), item.get("abstract"),
+            str(item["year"]) if item.get("year") is not None else None,
+            "semantic-scholar", args.query,
+            f"Semantic Scholar {args.relation} for {args.paper_id}" if args.paper_id else "Semantic Scholar relevance search",
+            {
+                "paper_id": item.get("paperId"),
+                "authors": [author["name"] for author in item.get("authors", [])],
+                "venue": item.get("venue"), "doi": (item.get("externalIds") or {}).get("DOI"),
+                "citation_count": item.get("citationCount"),
+                "abstract": clean_text(item.get("abstract"), 1800),
+                "pdf_url": (item.get("openAccessPdf") or {}).get("url"),
+                "retrieval_stage": "discovery",
+            },
+        )
+        for item in papers
+    ]
+
+
+def search_pubmed(args: argparse.Namespace) -> list[dict[str, object]]:
+    endpoint = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+    common = {"db": "pubmed", "tool": "research-router"}
+    api_key = os.environ.get("NCBI_API_KEY")
+    if api_key:
+        common["api_key"] = api_key
+    data = request_json(
+        f"{endpoint}/esearch.fcgi",
+        {**common, "term": args.query, "retmode": "json", "retmax": args.limit, "retstart": (args.page - 1) * args.limit},
+        args.timeout,
+    )["esearchresult"]
+    args.search_metadata = {
+        "count": int(data["count"]), "page": args.page,
+        "per_page": int(data["retmax"]), "offset": int(data["retstart"]),
+    }
+    if not data["idlist"]:
+        return []
+    payload = request_bytes(
+        f"{endpoint}/efetch.fcgi",
+        {**common, "id": ",".join(data["idlist"]), "retmode": "xml"},
+        args.timeout, accept="application/xml",
+    )
+    try:
+        root = ET.fromstring(payload)
+    except ET.ParseError as exc:
+        raise SearchError("PubMed did not return valid XML") from exc
+    error = root.findtext("ERROR")
+    if error:
+        raise SearchError(error)
+    results = []
+    for entry in root:
+        def text(path: str) -> str:
+            node = entry.find(path)
+            return "".join(node.itertext()) if node is not None else ""
+
+        pmid = text(".//PMID")
+        abstract = "\n".join("".join(node.itertext()) for node in entry.findall(".//Abstract/AbstractText"))
+        authors = [
+            " ".join(part for part in (author.findtext("ForeName"), author.findtext("LastName")) if part)
+            or author.findtext("CollectiveName", "")
+            for author in entry.findall(".//AuthorList/Author")
+        ]
+        pmc = text("./*/ArticleIdList/ArticleId[@IdType='pmc']")
+        results.append(record(
+            text(".//ArticleTitle"), f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/", abstract,
+            text(".//PubDate/Year") or text(".//PubDate/MedlineDate"), "pubmed", args.query,
+            "PubMed ESearch and selected-record EFetch",
+            {
+                "pmid": pmid, "authors": authors, "venue": text(".//Journal/Title"),
+                "doi": text("./*/ArticleIdList/ArticleId[@IdType='doi']"),
+                "abstract": clean_text(abstract, 1800),
+                "pmc_url": f"https://pmc.ncbi.nlm.nih.gov/articles/{pmc}/" if pmc else None,
+                "retrieval_stage": "discovery",
+            },
+        ))
+    return results
+
+
+def search_serpapi_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
+    api_key = os.environ.get("SERPAPI_API_KEY")
+    if not api_key:
+        raise SearchError("serpapi-scholar requires SERPAPI_API_KEY in the process environment")
+    data = request_json(
+        "https://serpapi.com/search.json",
+        {"engine": "google_scholar", "q": args.query, "num": args.limit,
+         "start": (args.page - 1) * args.limit, "hl": args.language, "api_key": api_key},
+        args.timeout,
+    )
+    if data.get("error"):
+        raise SearchError(f"SerpApi: {data['error']}")
+    args.search_metadata = {
+        "count": data.get("search_information", {}).get("total_results"),
+        "count_is_estimate": True, "page": args.page, "per_page": args.limit,
+    }
+    results = []
+    for item in data.get("organic_results", [])[: args.limit]:
+        publication = item.get("publication_info", {})
+        links = item.get("inline_links", {})
+        snippet = item.get("snippet", "")
+        results.append(record(
+            item.get("title"), item.get("link"), snippet, _scholar_year(publication.get("summary", "")),
+            "serpapi-scholar", args.query, "SerpApi Google Scholar discovery; snippet only",
+            {
+                "authors": [author["name"] for author in publication.get("authors", [])],
+                "publication_info": publication.get("summary"),
+                "citation_count": links.get("cited_by", {}).get("total"),
+                "citing_url": links.get("cited_by", {}).get("link"),
+                "version_count": links.get("versions", {}).get("total"),
+                "versions_url": links.get("versions", {}).get("link"),
+                "pdf_url": next((resource["link"] for resource in item.get("resources", []) if resource.get("file_format") == "PDF"), None),
+                "abstract_status": "snippet-only" if snippet else "missing",
+                "retrieval_stage": "discovery",
+            },
+        ))
     return results
 
 
@@ -686,6 +836,9 @@ SEARCHERS = {
     "dev-to": search_devto,
     "wikipedia": search_wikipedia,
     "openalex": search_openalex,
+    "semantic-scholar": search_semantic_scholar,
+    "pubmed": search_pubmed,
+    "serpapi-scholar": search_serpapi_scholar,
     "crossref": search_crossref,
     "arxiv": search_arxiv,
     "google-scholar": search_google_scholar,
@@ -698,7 +851,17 @@ SEARCHERS = {
 LIMITS = {
     "github": ["Unauthenticated GitHub Search API requests are rate limited."],
     "stackoverflow": ["Respect Stack Exchange quota, backoff, and API policies."],
-    "openalex": ["Public access may return 429; retry later and identify the client when possible."],
+    "openalex": [
+        "OPENALEX_API_KEY is optional; API budgets and rate limits apply.",
+        "This response contains one page; search_metadata.count is the source-reported total matching this query, not the size of the research field.",
+    ],
+    "semantic-scholar": [
+        "SEMANTIC_SCHOLAR_API_KEY is optional; anonymous requests share a rate-limit pool.",
+        "Relevance search exposes at most 1,000 ranked matches; references and citations use separate paginated endpoints.",
+        "Abstracts can be missing; citation links and counts do not replace primary-paper evidence.",
+    ],
+    "pubmed": ["NCBI_API_KEY is optional; E-utilities rate limits apply.", "Retrieved metadata and abstracts do not establish that the full paper was read."],
+    "serpapi-scholar": ["Requires SERPAPI_API_KEY and uses that account's search allowance only when selected.", "Google Scholar totals are estimates and result snippets are not full abstracts or full text."],
     "arxiv": ["Use a polite request interval; the endpoint is for discovery metadata."],
     "google-scholar": [
         "Public HTML discovery only; result snippets are not guaranteed to be complete abstracts.",
@@ -723,9 +886,15 @@ def main() -> int:
     parser.add_argument("--tag")
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--language", default="en")
+    parser.add_argument("--paper-id", help="Semantic Scholar, DOI:, ARXIV:, or PMID: ID for citation-chain discovery")
+    parser.add_argument("--relation", choices=["references", "citations"], default="references", help="Semantic Scholar relation used with --paper-id")
     args = parser.parse_args()
-    if not 1 <= args.limit <= 50:
-        parser.error("--limit must be between 1 and 50")
+    args.search_metadata = None
+    max_limit = {"openalex": 100, "semantic-scholar": 100, "serpapi-scholar": 20}.get(args.provider, 50)
+    if args.provider == "semantic-scholar" and args.paper_id:
+        max_limit = 1000
+    if not 1 <= args.limit <= max_limit:
+        parser.error(f"--limit must be between 1 and {max_limit}")
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     if args.page < 1:
@@ -756,6 +925,7 @@ def main() -> int:
                 "status": "ok" if results else "partial",
                 "provider": args.provider,
                 "query": args.query,
+                **({"search_metadata": args.search_metadata} if args.search_metadata is not None else {}),
                 "results": results,
                 "evidence_level": "discovery",
                 "next_action": "read_selected",

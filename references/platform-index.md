@@ -19,7 +19,7 @@ Exa 是通用 search component，不属于平台 Tier。
 | 平台 | Tier | 首选入口 | 本地脚本或外部能力 | 边界 |
 | --- | ---: | --- | --- | --- |
 | GitHub | 1 | `github-local` | `scripts/github_public.py` + `scripts/platform_discovery.py` | REST 无结果/失败后可选 `gh`，再无候选用 `site:github.com`；源文件顺序为已有 route snapshot -> Git shallow snapshot -> 官方 archive -> 已知路径 raw -> 有限 REST Contents；Agent 解释源码 |
-| Academic | 1 | `academic-local` | `fast_search.py` + `academic_public.py` + `academic-evidence/` | OpenAlex、Crossref、arXiv、Scholar 发现和 metadata；公开 HTML 正文按需读取 |
+| Academic | 1 | `academic-local` | `fast_search.py` + `academic_public.py` + `academic-evidence/` | 按覆盖选用 OpenAlex、Semantic Scholar、PubMed、Crossref、arXiv、公开 Scholar；SerpApi Scholar 为需 key 的可选来源；公开正文按需读取 |
 | Google Scholar | 1 | `academic-local` | `fast_search.py --provider google-scholar` + `academic_public.py` | Scholar 只做候选发现；转向公开 HTML 或主论文来源 |
 | Stack Overflow | 2 | `generic-platform-discovery` | `fast_search.py` 的 Stack Exchange API | 公开问题搜索；回答正文经选定页面读取 |
 | Linux.do | 2 | `generic-platform-discovery` | `fast_search.py` 的 Discourse JSON provider | 使用已登记的公开论坛 endpoint |
