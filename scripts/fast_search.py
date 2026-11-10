@@ -241,23 +241,35 @@ def search_wikipedia(args: argparse.Namespace) -> list[dict[str, object]]:
 
 def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
     api_key = os.environ.get("OPENALEX_API_KEY")
+    params = {"search": args.query, "per_page": args.limit}
+    params.update({"cursor": args.cursor} if args.cursor else {"page": args.page})
+    filters = [f"{key}:{value}" for key, value in
+               (("from_publication_date", args.from_date), ("to_publication_date", args.until_date)) if value]
+    if filters:
+        params["filter"] = ",".join(filters)
     data = request_json(
         "https://api.openalex.org/works",
-        {"search": args.query, "per_page": args.limit, "page": args.page},
+        params,
         args.timeout,
         headers={"Authorization": f"Bearer {api_key}"} if api_key else None,
     )
     args.search_metadata = {
         key: value for key, value in data["meta"].items()
-        if key in {"count", "page", "per_page", "cost_usd"}
+        if key in {"count", "page", "per_page", "cost_usd", "next_cursor"}
     }
+    if args.cursor:
+        args.search_metadata["cursor"] = args.cursor
+        args.search_metadata["has_more"] = bool(data.get("results") and data["meta"].get("next_cursor"))
+    else:
+        args.search_metadata["has_more"] = args.page * args.limit < data["meta"]["count"]
+        args.search_metadata["next_page"] = args.page + 1 if args.search_metadata["has_more"] else None
     results = []
     for item in data.get("results", [])[: args.limit]:
         location = item.get("primary_location") or {}
         source = location.get("source") or {}
         authors = [
             (author.get("author") or {}).get("display_name", "")
-            for author in item.get("authorships", [])[:12]
+            for author in item.get("authorships", [])
         ]
         abstract_index = item.get("abstract_inverted_index") or {}
         abstract = ""
@@ -282,6 +294,7 @@ def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
                     "authors": authors,
                     "venue": source.get("display_name"),
                     "doi": item.get("doi"),
+                    "openalex_id": item.get("id"),
                     "citation_count": item.get("cited_by_count"),
                     "abstract": clean_text(abstract, 1800),
                     "open_access": (item.get("open_access") or {}).get("is_oa"),
@@ -296,11 +309,27 @@ def search_openalex(args: argparse.Namespace) -> list[dict[str, object]]:
 
 
 def search_crossref(args: argparse.Namespace) -> list[dict[str, object]]:
+    offset = (args.page - 1) * args.limit
+    params = {"query": args.query, "rows": args.limit}
+    params.update({"cursor": args.cursor} if args.cursor else {"offset": offset})
+    filters = [f"{key}:{value}" for key, value in
+               (("from-pub-date", args.from_date), ("until-pub-date", args.until_date)) if value]
+    if filters:
+        params["filter"] = ",".join(filters)
     data = request_json(
         "https://api.crossref.org/works",
-        {"query": args.query, "rows": args.limit},
+        params,
         args.timeout,
     )
+    message = data["message"]
+    args.search_metadata = {"count": message["total-results"], "page": args.page,
+                            "per_page": args.limit, "offset": offset}
+    if args.cursor:
+        args.search_metadata.update(cursor=args.cursor, next_cursor=message.get("next-cursor"),
+                                    has_more=bool(message["items"] and message.get("next-cursor")))
+    else:
+        args.search_metadata.update(has_more=offset + len(message["items"]) < message["total-results"])
+        args.search_metadata["next_page"] = args.page + 1 if args.search_metadata["has_more"] else None
     results = []
     for item in data.get("message", {}).get("items", [])[: args.limit]:
         title = (item.get("title") or [""])[0]
@@ -340,24 +369,40 @@ def search_semantic_scholar(args: argparse.Namespace) -> list[dict[str, object]]
     api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
     endpoint = "https://api.semanticscholar.org/graph/v1/paper/search"
     params = {
-        "query": args.query, "offset": (args.page - 1) * args.limit,
+        "query": args.query, "offset": args.offset if args.offset is not None else (args.page - 1) * args.limit,
         "limit": args.limit,
         "fields": "title,url,authors,year,venue,abstract,citationCount,externalIds,openAccessPdf",
     }
     if args.paper_id:
         endpoint = f"https://api.semanticscholar.org/graph/v1/paper/{quote(args.paper_id, safe='')}/{args.relation}"
         del params["query"]
+    elif args.bulk:
+        endpoint += "/bulk"
+        del params["offset"]
+        del params["limit"]
+        if args.token:
+            params["token"] = args.token
+    if not args.paper_id and (args.from_date or args.until_date):
+        params["year"] = f"{(args.from_date or '')[:4]}-{(args.until_date or '')[:4]}"
     data = request_json(endpoint, params, args.timeout, headers={"x-api-key": api_key} if api_key else None)
     args.search_metadata = {"page": args.page, "per_page": args.limit}
     for field, output in (("total", "count"), ("offset", "offset"), ("next", "next_offset")):
         if field in data:
             args.search_metadata[output] = data[field]
+    if args.bulk and not args.paper_id:
+        args.search_metadata.update(next_token=data.get("token"), token=args.token,
+                                    count_is_estimate=True, has_more=bool(data.get("token")))
+    else:
+        args.search_metadata["has_more"] = data.get("next") is not None
     papers = data["data"]
     if papers is None:
         raise SearchError("Semantic Scholar did not expose the requested records; missing data is not an empty reference list")
     if args.paper_id:
         field = "citedPaper" if args.relation == "references" else "citingPaper"
         papers = [item[field] for item in papers]
+    args.search_metadata["returned"] = len(papers)
+    if args.bulk and not args.paper_id:
+        args.search_metadata.update(per_page=len(papers), requested_limit=args.limit)
     return [
         record(
             item.get("title"), item.get("url"), item.get("abstract"),
@@ -368,6 +413,8 @@ def search_semantic_scholar(args: argparse.Namespace) -> list[dict[str, object]]
                 "paper_id": item.get("paperId"),
                 "authors": [author["name"] for author in item.get("authors", [])],
                 "venue": item.get("venue"), "doi": (item.get("externalIds") or {}).get("DOI"),
+                "arxiv_id": (item.get("externalIds") or {}).get("ArXiv"),
+                "external_ids": item.get("externalIds") or {},
                 "citation_count": item.get("citationCount"),
                 "abstract": clean_text(item.get("abstract"), 1800),
                 "pdf_url": (item.get("openAccessPdf") or {}).get("url"),
@@ -386,13 +433,18 @@ def search_pubmed(args: argparse.Namespace) -> list[dict[str, object]]:
         common["api_key"] = api_key
     data = request_json(
         f"{endpoint}/esearch.fcgi",
-        {**common, "term": args.query, "retmode": "json", "retmax": args.limit, "retstart": (args.page - 1) * args.limit},
+        {**common, "term": args.query, "retmode": "json", "retmax": args.limit, "retstart": (args.page - 1) * args.limit,
+         **({"datetype": "pdat", "mindate": args.from_date or "1900/01/01",
+             "maxdate": args.until_date or datetime.now(timezone.utc).date().isoformat()}
+            if args.from_date or args.until_date else {})},
         args.timeout,
     )["esearchresult"]
     args.search_metadata = {
         "count": int(data["count"]), "page": args.page,
         "per_page": int(data["retmax"]), "offset": int(data["retstart"]),
     }
+    args.search_metadata["has_more"] = int(data["retstart"]) + len(data["idlist"]) < int(data["count"])
+    args.search_metadata["next_page"] = args.page + 1 if args.search_metadata["has_more"] else None
     if not data["idlist"]:
         return []
     payload = request_bytes(
@@ -443,7 +495,9 @@ def search_serpapi_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
     data = request_json(
         "https://serpapi.com/search.json",
         {"engine": "google_scholar", "q": args.query, "num": args.limit,
-         "start": (args.page - 1) * args.limit, "hl": args.language, "api_key": api_key},
+         "start": (args.page - 1) * args.limit, "hl": args.language, "api_key": api_key,
+         **({"as_ylo": args.from_date[:4]} if args.from_date else {}),
+         **({"as_yhi": args.until_date[:4]} if args.until_date else {})},
         args.timeout,
     )
     if data.get("error"):
@@ -452,6 +506,8 @@ def search_serpapi_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
         "count": data.get("search_information", {}).get("total_results"),
         "count_is_estimate": True, "page": args.page, "per_page": args.limit,
     }
+    args.search_metadata["next_page"] = args.page + 1 if data.get("serpapi_pagination", {}).get("next") else None
+    args.search_metadata["has_more"] = args.search_metadata["next_page"] is not None
     results = []
     for item in data.get("organic_results", [])[: args.limit]:
         publication = item.get("publication_info", {})
@@ -476,9 +532,16 @@ def search_serpapi_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
 
 
 def search_arxiv(args: argparse.Namespace) -> list[dict[str, object]]:
+    query = args.query if re.search(r"\b(?:all|ti|au|abs|cat|id|submittedDate|lastUpdatedDate):", args.query) else f"all:{args.query}"
+    if args.from_date or args.until_date:
+        start_date = (args.from_date or "1991-01-01").replace("-", "") + "0000"
+        end_date = (args.until_date or datetime.now(timezone.utc).date().isoformat()).replace("-", "") + "2359"
+        query = f"({query}) AND submittedDate:[{start_date} TO {end_date}]"
+    offset = (args.page - 1) * args.limit
     payload = request_bytes(
         "https://export.arxiv.org/api/query",
-        {"search_query": f"all:{args.query}", "max_results": args.limit},
+        {"search_query": query, "start": offset, "max_results": args.limit,
+         "sortBy": "submittedDate", "sortOrder": "descending"},
         args.timeout,
         accept="application/atom+xml",
     )
@@ -486,6 +549,11 @@ def search_arxiv(args: argparse.Namespace) -> list[dict[str, object]]:
         root = ET.fromstring(payload)
     except ET.ParseError as exc:
         raise SearchError("arXiv endpoint did not return valid Atom XML") from exc
+    total = int(root.findtext("{http://a9.com/-/spec/opensearch/1.1/}totalResults", "0"))
+    args.search_metadata = {"count": total, "page": args.page, "per_page": args.limit,
+                            "offset": offset, "has_more": offset + args.limit < total,
+                            "next_page": args.page + 1 if offset + args.limit < total else None,
+                            "date_field": "submittedDate", "source_query": query}
     results = []
     for entry in root.findall("{http://www.w3.org/2005/Atom}entry")[: args.limit]:
         def child(name: str) -> str:
@@ -508,13 +576,60 @@ def search_arxiv(args: argparse.Namespace) -> list[dict[str, object]]:
                         if child_node.text
                     ],
                     "arxiv_id": child("id").rsplit("/", 1)[-1],
+                    "updated_at": child("updated"),
+                    "doi": entry.findtext("{http://arxiv.org/schemas/atom}doi"),
                     "pdf_url": child("id").replace("/abs/", "/pdf/"),
                     "html_url": "https://arxiv.org/html/" + child("id").rsplit("/", 1)[-1],
-                    "categories": [node.attrib.get("term") for node in entry.findall("{http://arxiv.org/schemas/atom}primary_category")],
+                    "categories": [node.attrib.get("term") for node in entry.findall("{http://www.w3.org/2005/Atom}category")],
                     "retrieval_stage": "discovery",
                 },
             )
         )
+    return results
+
+
+def search_dblp(args: argparse.Namespace) -> list[dict[str, object]]:
+    offset = (args.page - 1) * args.limit
+    if args.venue_url:
+        xml_url = args.venue_url.removesuffix(".html") + ".xml"
+        try:
+            root = ET.fromstring(request_bytes(xml_url, None, args.timeout, accept="application/xml"))
+        except ET.ParseError as exc:
+            raise SearchError("DBLP conference directory did not return XML; access challenges are not paper records") from exc
+        papers = root.findall(".//inproceedings")
+        args.search_metadata = {"count": len(papers), "page": args.page, "per_page": args.limit,
+                                "offset": offset, "directory": args.venue_url,
+                                "has_more": offset + args.limit < len(papers),
+                                "next_page": args.page + 1 if offset + args.limit < len(papers) else None}
+        return [record("".join(p.find("title").itertext()), "https://dblp.org/rec/" + p.attrib["key"],
+                       p.findtext("booktitle"), p.findtext("year"), "dblp", args.query,
+                       "DBLP conference directory enumeration", {"authors": [a.text for a in p.findall("author")],
+                       "venue": p.findtext("booktitle"), "dblp_key": p.attrib["key"],
+                       "official_page": p.findtext("ee"), "doi": p.findtext("doi"), "retrieval_stage": "discovery"})
+                for p in papers[offset:offset + args.limit]]
+    data = request_json("https://dblp.org/search/publ/api",
+                        {"q": args.query, "h": args.limit, "f": offset, "format": "json"}, args.timeout)
+    hits = data["result"]["hits"]
+    total = int(hits["@total"])
+    args.search_metadata = {"count": total, "page": args.page, "per_page": args.limit,
+                            "offset": offset, "has_more": offset + args.limit < total,
+                            "next_page": args.page + 1 if offset + args.limit < total else None,
+                            "date_precision": "year", "date_filter": "query expression"}
+    rows = hits.get("hit", [])
+    if isinstance(rows, dict):
+        rows = [rows]
+    results = []
+    for row in rows:
+        item = row["info"]
+        authors = (item.get("authors") or {}).get("author", [])
+        if isinstance(authors, dict):
+            authors = [authors]
+        results.append(record(item.get("title"), item.get("url"), item.get("venue"), item.get("year"),
+                              "dblp", args.query, "DBLP publication search", {
+                              "authors": [a["text"] if isinstance(a, dict) else a for a in authors],
+                              "venue": item.get("venue"), "doi": item.get("doi"),
+                              "dblp_key": item.get("key"), "official_page": item.get("ee"),
+                              "type": item.get("type"), "retrieval_stage": "discovery"}))
     return results
 
 
@@ -684,15 +799,15 @@ def _scholar_link_counts(item: dict[str, object]) -> tuple[int | None, int | Non
 
 def search_google_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
     endpoint = "https://scholar.google.com/scholar"
+    params = {"q": args.query, "start": (args.page - 1) * 10,
+              "num": 10, "hl": args.language, "as_sdt": "0,5"}
+    if args.from_date:
+        params["as_ylo"] = args.from_date[:4]
+    if args.until_date:
+        params["as_yhi"] = args.until_date[:4]
     payload = request_bytes(
         endpoint,
-        {
-            "q": args.query,
-            "start": (args.page - 1) * 10,
-            "num": 10,
-            "hl": "en",
-            "as_sdt": "0,5",
-        },
+        params,
         args.timeout,
         accept="text/html,application/xhtml+xml",
     )
@@ -712,8 +827,13 @@ def search_google_scholar(args: argparse.Namespace) -> list[dict[str, object]]:
     parser = GoogleScholarParser()
     parser.feed(document)
     parser.close()
+    args.search_metadata = {"page": args.page, "per_page": 10, "requested_limit": args.limit,
+                            "returned": len(parser.results), "offset": (args.page - 1) * 10,
+                            "next_page": args.page + 1 if parser.results else None,
+                            "has_more": None, "date_precision": "year",
+                            "paging_note": "Next page is a continuation candidate, not a confirmed remaining total; the complete returned page is retained."}
     results: list[dict[str, object]] = []
-    for item in parser.results[: args.limit]:
+    for item in parser.results:
         authors_line = str(item.get("authors_line") or "")
         title = str(item.get("title") or "")
         snippet = str(item.get("snippet") or "")
@@ -841,6 +961,7 @@ SEARCHERS = {
     "serpapi-scholar": search_serpapi_scholar,
     "crossref": search_crossref,
     "arxiv": search_arxiv,
+    "dblp": search_dblp,
     "google-scholar": search_google_scholar,
     "discourse": search_discourse,
     "rss": search_rss,
@@ -863,6 +984,7 @@ LIMITS = {
     "pubmed": ["NCBI_API_KEY is optional; E-utilities rate limits apply.", "Retrieved metadata and abstracts do not establish that the full paper was read."],
     "serpapi-scholar": ["Requires SERPAPI_API_KEY and uses that account's search allowance only when selected.", "Google Scholar totals are estimates and result snippets are not full abstracts or full text."],
     "arxiv": ["Use a polite request interval; the endpoint is for discovery metadata."],
+    "dblp": ["DBLP indexes bibliography, not abstracts or full text; h/f paginate search hits.", "Conference enumeration requires the selected DBLP directory's public XML; stop on access challenges."],
     "google-scholar": [
         "Public HTML discovery only; result snippets are not guaranteed to be complete abstracts.",
         "Use a low request rate and stop on 403, 429, CAPTCHA, or challenge pages; do not retry aggressively.",
@@ -885,12 +1007,19 @@ def main() -> int:
     parser.add_argument("--category")
     parser.add_argument("--tag")
     parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--from-date", help="Academic publication start date, YYYY-MM-DD")
+    parser.add_argument("--until-date", help="Academic publication cutoff date, YYYY-MM-DD")
+    parser.add_argument("--cursor", help="OpenAlex/Crossref cursor; use * for the first cursor request")
+    parser.add_argument("--bulk", action="store_true", help="Semantic Scholar bulk retrieval (retains the whole server batch)")
+    parser.add_argument("--token", help="Semantic Scholar bulk continuation token")
+    parser.add_argument("--offset", type=int, help="Exact Semantic Scholar next_offset")
+    parser.add_argument("--venue-url", help="DBLP conference volume HTML URL for complete directory enumeration")
     parser.add_argument("--language", default="en")
     parser.add_argument("--paper-id", help="Semantic Scholar, DOI:, ARXIV:, or PMID: ID for citation-chain discovery")
     parser.add_argument("--relation", choices=["references", "citations"], default="references", help="Semantic Scholar relation used with --paper-id")
     args = parser.parse_args()
     args.search_metadata = None
-    max_limit = {"openalex": 100, "semantic-scholar": 100, "serpapi-scholar": 20}.get(args.provider, 50)
+    max_limit = {"openalex": 100, "semantic-scholar": 100, "serpapi-scholar": 20, "dblp": 1000}.get(args.provider, 50)
     if args.provider == "semantic-scholar" and args.paper_id:
         max_limit = 1000
     if not 1 <= args.limit <= max_limit:
@@ -928,7 +1057,11 @@ def main() -> int:
                 **({"search_metadata": args.search_metadata} if args.search_metadata is not None else {}),
                 "results": results,
                 "evidence_level": "discovery",
-                "next_action": "read_selected",
+                "next_action": "continue_discovery" if args.provider in {"openalex", "crossref", "arxiv", "semantic-scholar", "dblp", "google-scholar"} and args.search_metadata and
+                    (args.search_metadata.get("has_more") or args.search_metadata.get("next_page")) else "read_selected",
+                **({"search_scope": {"from_date": args.from_date, "until_date": args.until_date,
+                                     "language": args.language, "retrieved_at": datetime.now(timezone.utc).isoformat()}}
+                   if args.provider in {"openalex", "crossref", "arxiv", "semantic-scholar", "dblp", "google-scholar", "pubmed", "serpapi-scholar"} else {}),
                 "limits": LIMITS.get(args.provider, []),
             },
             ensure_ascii=False,

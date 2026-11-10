@@ -12,6 +12,7 @@ import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from academic_public import crossref_metadata as get_crossref_metadata, arxiv_metadata as get_arxiv_metadata, ARXIV_ID
 
 UA = "research-router/academic-evidence/1.0"
 CTX = ssl.create_default_context()
@@ -83,28 +84,11 @@ def normalize_date(text: str) -> str | None:
 
 
 def crossref_metadata(doi: str) -> dict:
-    url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
-    message = json.loads(http_get(url))["message"]
-    out = {}
-    titles = message.get("title") or []
-    if titles:
-        out["title"] = titles[0].strip()
-    authors = []
-    for author in message.get("author") or []:
-        given = (author.get("given") or "").strip()
-        family = (author.get("family") or "").strip()
-        full = " ".join(part for part in [given, family] if part).strip()
-        if full:
-            authors.append(full)
-    if authors:
-        out["authors"] = authors
-    for key in ["published-print", "published-online", "published", "issued", "created"]:
-        parts = (message.get(key) or {}).get("date-parts") or []
-        if parts and parts[0]:
-            arr = parts[0]
-            if len(arr) >= 2:
-                out["published_ym"] = f"{arr[0]:04d}-{arr[1]:02d}"
-                break
+    meta = get_crossref_metadata(doi)
+    parts = meta["published_date_parts"]
+    out = {"title": meta["title"], "authors": meta["authors"]}
+    if parts:
+        out["published_ym"] = "-".join(f"{p:02d}" for p in parts[:2])
     return out
 
 
@@ -165,24 +149,12 @@ def page_metadata(url: str) -> dict:
 
 
 def arxiv_metadata(url: str) -> dict:
-    match = re.search(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5})", url)
+    match = ARXIV_ID.search(url)
     if not match:
         return {}
-    xml = http_get("https://export.arxiv.org/api/query?id_list=" + match.group(1))
-    out = {}
-    title = re.search(r"<title>(.*?)</title>", xml, flags=re.S)
-    if title:
-        cleaned = re.sub(r"\s+", " ", html.unescape(title.group(1))).strip()
-        if cleaned.lower() != "arxiv query results":
-            out["title"] = cleaned
-    authors = re.findall(r"<name>(.*?)</name>", xml, flags=re.S)
-    authors = [re.sub(r"\s+", " ", html.unescape(a)).strip() for a in authors if a.strip()]
-    if authors:
-        out["authors"] = authors
-    published = re.search(r"<published>(\d{4})-(\d{2})-\d{2}T", xml)
-    if published:
-        out["published_ym"] = f"{published.group(1)}-{published.group(2)}"
-    return out
+    meta = get_arxiv_metadata(match.group(1))
+    return {"title": meta["title"], "authors": meta["authors"],
+            "published_ym": (meta.get("published_at") or "")[:7], "arxiv_id": meta["arxiv_id"]}
 
 
 def second_link_label(page_url: str) -> str:

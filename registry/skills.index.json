@@ -43,7 +43,7 @@
       "tier": 1,
       "adapter_type": "local-scripts-and-agent-workflow",
       "scripts": ["scripts/fast_search.py", "academic-evidence/scripts/academic_public.py", "academic-evidence/scripts/extract_paper_brief.py"],
-      "limits": ["Public endpoints may rate-limit", "PDF text extraction needs pypdf if used", "HTML and abstract availability varies by paper"],
+      "limits": ["Public endpoints may rate-limit", "PDF acquisition and reading use the existing Paper Reading capability; optional legacy brief extraction needs pypdf", "HTML and abstract availability varies by paper"],
       "status": "bundled"
     },
     {

@@ -119,6 +119,19 @@ V2EX 的公开 API 负责 hot、node、topic、replies、user 等读取；关键
 
 ## Query packet
 
+### 计算机论文查询
+
+此节仅用于 academic。先从当前项目的研究命题/RQ提取任务、方法、约束与评价对象，不能只搜项目简称。补英文、中文、缩写、旧称与近邻方法；来源语法由Agent分别生成。
+
+- arXiv支持`ti:`、`abs:`、`cat:`与布尔组合；`--from-date/--until-date`按`submittedDate`限制首次提交，`updated_at`另留原记录。
+- OpenAlex/Crossref将公开日期条件传给API。Scholar/S2日期精度是年份，不把年份当具体发表日。
+- DBLP负责计算机书目和会议卷目录；指定会议年份时先定位准确卷URL，再用`--venue-url`枚举，不能仅以排名搜索代替目录。DBLP日期条件写进已核实的查询表达式，`--from-date`不代替其查询语法。
+- 每个查询保留来源、实际表达式、时间条件、返回总数与续取值。查询或范围改变后从新查询第一页开始，不复用旧游标。
+- 已知核心论文未出现时，用标题/DOI/arXiv定位，反查缺失的术语、来源、年份并追踪引用链。
+- 排序和选读不删除候选；没有摘要、引用少或暂缺PDF的记录仍可保留。只有任务所需候选阅读，不固定凑查询/论文数量。
+
+Academic／Scholar合并分发时，`source_tasks`分别保存查询与限定范围；不得把Scholar专项查询发送给所有数据库。
+
 每个平台的 dispatch packet 至少保存：
 
 ```json

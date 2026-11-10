@@ -105,7 +105,7 @@ npx skills add sxyq/research-router --skill research-router
 | 随仓库提供 | 可选增强 |
 | --- | --- |
 | GitHub API 搜索、README、树、选定源码、依赖/配置、测试、Issues、Releases、commits | `github-search`、`github-analyze`、`last30days-cn` |
-| OpenAlex、Semantic Scholar、PubMed、Crossref、arXiv、公开 Scholar 发现；题录/可用摘要、引用链和公开 HTML 论文段落 | 已有 key 的 SerpApi Scholar；`anysearch`、`paper-research-router`、`literature-evidence-audit`；已有 `pypdf` 时可读取下载的 PDF |
+| OpenAlex、Semantic Scholar、DBLP、PubMed、Crossref、arXiv、公开 Scholar 发现；题录/可用摘要、引用链和公开 HTML 论文段落 | 已有 key 的 SerpApi Scholar；按需搜索或引用能力；PDF 阶段直接使用已安装的 Paper Reading 叶子，不再启动完整研究流程 |
 | Bilibili 搜索、V2EX 公开 API、Discourse 搜索、52pojie 公开读取、雪球公开端点 | AutoCLI 和其他平台专项 Skill 的额外详情 |
 | 其他登记站点的免 Key 域名限定公开网页发现 | DDGS、Exa 等可扩展发现范围；YouTube 的 `yt-dlp` 字幕/详情；X 的 CLI/session |
 
@@ -206,7 +206,7 @@ research-router/
 | 平台 | Bundled light | Bundled medium | Bundled deep | 可选增强 |
 | --- | --- | --- | --- | --- |
 | GitHub | `github-local`: REST 检索与仓库字段；README 证据沿用源码获取顺序 | 复用 route snapshot；否则 shallow Git snapshot，再按需读取树、源码/配置/测试、Issues/Releases | 同一仓库一次临时 snapshot，多次本地读取；必要时 archive、已知路径 raw、有限 REST Contents | `github-search`、`github-analyze`、`last30days-cn`、已授权 `gh`/token |
-| Academic / Google Scholar | `academic-local`: 公共文献发现 | 补作者、venue、日期、摘要与选定来源 | 加入公开 HTML 正文段落和跨来源核对 | `anysearch`、`paper-research-router`、`literature-evidence-audit` |
+| Academic / Google Scholar | 同一 `academic-local` 任务：公共文献发现 | 沿同一任务补作者、venue、日期、摘要与选定来源 | 公开 HTML 或现有 Paper Reading 叶子；跨来源核对 | 按具体阶段补搜索或引用能力 |
 | Bilibili | `bilibili-public` 搜索 | 同一本地公开视频发现 | 更广查询与候选核对 | AutoCLI/last30days-cn；视频详情和字幕另需运行环境 |
 | V2EX | `v2ex-public` | 同一本地公开 API，按需读取帖子/回复 | 增加查询和主题覆盖 | AutoCLI、last30days-cn |
 | Discourse / Linux.do | `forum-search` 或已登记 endpoint | 搜索并读取选中主题 | 增加主题与回复范围 | 登录内容仍需可用账号会话 |
@@ -239,7 +239,7 @@ python3 academic-evidence/scripts/academic_public.py read --url https://arxiv.or
 python3 scripts/platform_discovery.py --platform reddit --query "agent research workflow"
 ```
 
-`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Semantic Scholar、PubMed、Crossref、arXiv、公开 Scholar、可选 SerpApi Scholar、Discourse、RSS/Atom 和可选 `ddgs`。新增学术来源沿用同一入口和结果字段，不另建平台、Skill 或调度链。GitHub 仍由 `github_public.py` 提供结构化信息和选定文件读取。API 题录、摘要和 Scholar 片段用于发现；方法和实验结论继续读取选定论文的公开正文或 PDF。
+`fast_search.py` 包含 Stack Exchange、Hacker News、Dev.to、Wikipedia、OpenAlex、Semantic Scholar、DBLP、PubMed、Crossref、arXiv、公开 Scholar、可选 SerpApi Scholar、Discourse、RSS/Atom 和可选 `ddgs`。新增学术来源沿用同一入口和结果字段，不另建平台、Skill 或调度链。GitHub 仍由 `github_public.py` 提供结构化信息和选定文件读取。API 题录、摘要和 Scholar 片段用于发现；方法和实验结论继续读取选定论文的公开正文或 PDF。
 
 | 数据源 | Provider | 凭据变量 | 使用范围 |
 | --- | --- | --- | --- |
@@ -268,10 +268,10 @@ GitHub 检索先用 bundled REST；无结果或请求失败时再尝试本机已
 学术查询统一按下面的阶段推进：
 
 ```text
-discovery -> selected papers -> paper-brief -> explicit full-audit
+discovery / continue paging -> retained candidates -> selected-source reading -> task-specific evidence
 ```
 
-按学科、语言和引用覆盖选用 Scholar、OpenAlex、Semantic Scholar、PubMed、arXiv 或 Crossref；选定论文后，继续使用 `academic_public.py` 和现有 PDF 脚本读取来源。arXiv HTML 可用时优先使用；`pypdf` 未安装时说明 PDF 提取缺口，不自动安装。`extract_paper_brief.py` 仍用于本地 PDF brief。
+学术仍使用一个 `academic-local` 任务，Academic／Scholar 的来源限定放在各自 `source_tasks`。按问题选用 Scholar、OpenAlex、Semantic Scholar、DBLP、arXiv、Crossref 或 PubMed，保留全部取得的候选、来源和续取信息。指定会议时可枚举对应 DBLP 卷目录。已选 HTML 用 `academic_public.py` 读取；PDF 获取与结构化阅读直接调用现有 Paper Reading 叶子，不重跑发现或旧编号下载链。已有 PDF 原位复用。`extract_paper_brief.py` 保留本地 PDF 摘要提取职责。
 
 详细调用方式见 [references/search-components.md](references/search-components.md)。
 

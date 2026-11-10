@@ -19,7 +19,6 @@ from typing import Any
 USER_AGENT = "research-router/academic-public"
 TIMEOUT = 20.0
 MAX_RESPONSE_BYTES = 8_000_000
-MAX_TEXT_CHARS = 24_000
 ATOM = "http://www.w3.org/2005/Atom"
 ARXIV_ID = re.compile(r"(?:arxiv\.org/(?:abs|pdf|html)/)(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
 
@@ -76,8 +75,9 @@ def arxiv_metadata(identifier: str) -> dict[str, Any]:
         "title": text("title"),
         "authors": [author for author in authors if author],
         "published_at": published or None,
+        "updated_at": text("updated") or None,
         "abstract": text("summary"),
-        "categories": [item.attrib.get("term") for item in entry.findall(f"{{{ATOM}}}{{http://arxiv.org/schemas/atom}}category")],
+        "categories": [item.attrib.get("term") for item in entry.findall(f"{{{ATOM}}}category")],
         "url": base,
         "html_url": f"https://arxiv.org/html/{identifier}",
         "pdf_url": f"https://arxiv.org/pdf/{identifier}",
@@ -164,7 +164,7 @@ class PaperPageParser(HTMLParser):
                 if text:
                     self.headings.append(text[:240])
             elif text:
-                self.paragraphs.append(text[:3000])
+                self.paragraphs.append(text)
             self.capture_tag = None
             self.capture_depth = -1
             self.capture_parts = []
@@ -195,11 +195,9 @@ def read_html(url: str, terms: list[str], max_paragraphs: int) -> dict[str, Any]
         ]
     else:
         selected = parser.paragraphs
+    matched_count = len(selected)
     selected = selected[:max_paragraphs]
-    all_text = "\n\n".join(selected)
-    truncated = len(all_text) > MAX_TEXT_CHARS
-    if truncated:
-        all_text = all_text[:MAX_TEXT_CHARS]
+    truncated = matched_count > len(selected)
     authors = parser.meta.get("citation_author", [])
     return {
         "status": "ok" if (abstract or selected) else "partial",
@@ -208,8 +206,11 @@ def read_html(url: str, terms: list[str], max_paragraphs: int) -> dict[str, Any]
         "title": title,
         "authors": authors,
         "abstract": abstract,
-        "headings": parser.headings[:160],
+        "headings": parser.headings,
         "selected_passages": selected,
+        "paragraphs_total": len(parser.paragraphs),
+        "paragraphs_matched": matched_count,
+        "paragraphs_returned": len(selected),
         "terms": terms,
         "truncated": truncated,
         "evidence_level": "public-html-body" if selected else "metadata",

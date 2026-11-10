@@ -209,7 +209,7 @@
       "platforms": ["academic", "google-scholar"],
       "providers": ["openalex"],
       "output": ["title", "url", "authors", "venue", "published_at", "citation_count", "search_metadata"],
-      "limits": ["Configured OPENALEX_API_KEY is optional and sent in the Authorization header", "One requested page per call, up to 100 records; source-reported totals and request metadata are preserved", "Anonymous and authenticated API budgets apply; access can return 429", "Query totals do not establish literature coverage or novelty", "Metadata and citation counts do not replace paper body evidence"]
+      "limits": ["Configured OPENALEX_API_KEY is optional and sent in the Authorization header","One requested page per call, up to 100 records; source-reported totals and request metadata are preserved","Anonymous and authenticated API budgets apply; access can return 429","Query totals do not establish literature coverage or novelty","Metadata and citation counts do not replace paper body evidence","Cursor retrieval uses --cursor; current official policy requires a key to follow next_cursor beyond cursor=*."]
     },
     {
       "id": "arxiv-api",
@@ -221,7 +221,7 @@
       "platforms": ["academic", "google-scholar"],
       "providers": ["arxiv"],
       "output": ["title", "url", "summary", "published_at"],
-      "limits": ["Use a polite request interval", "Abstracts locate papers; detailed claims require the PDF or source body"]
+      "limits": ["Use a polite request interval","Abstracts locate papers; detailed claims require the PDF or source body","--page maps to start; submission-date scope, totalResults and updated_at are retained."]
     },
     {
       "id": "google-scholar-html",
@@ -233,7 +233,7 @@
       "platforms": ["google-scholar"],
       "providers": ["google-scholar"],
       "output": ["title", "authors", "published_at", "citation_count", "version_count", "pdf_url", "abstract_status", "retrieval_stage"],
-      "limits": ["Direct public HTML has no official API guarantee", "Result text is an abstract-like snippet and may be incomplete", "Use low-frequency bounded requests and stop on 403, 429, CAPTCHA, or challenge pages", "Enrich selected papers through OpenAlex, arXiv, Crossref, or the publisher before evidence work"]
+      "limits": ["Direct public HTML has no official API guarantee","Result text is an abstract-like snippet and may be incomplete","Use low-frequency bounded requests and stop on 403, 429, CAPTCHA, or challenge pages","Enrich selected papers through OpenAlex, arXiv, Crossref, or the publisher before evidence work","Retain the entire ten-item returned page, including candidates beyond --limit; record the unconfirmed continuation and year/language scope."]
     },
     {
       "id": "crossref-api",
@@ -245,7 +245,7 @@
       "platforms": ["academic", "google-scholar"],
       "providers": ["crossref"],
       "output": ["title", "doi", "authors", "published_at", "url"],
-      "limits": ["Crossref confirms metadata, not the paper's findings"]
+      "limits": ["Crossref confirms metadata, not the paper's findings","--page maps to offset; --cursor supports deeper queries; publication-date filters and source totals retained."]
     },
     {
       "id": "semantic-scholar-api",
@@ -257,7 +257,7 @@
       "platforms": ["academic", "google-scholar"],
       "providers": ["semantic-scholar"],
       "output": ["title", "url", "published_at", "authors", "doi", "paper_id", "citation_count", "abstract", "pdf_url", "search_metadata"],
-      "limits": ["SEMANTIC_SCHOLAR_API_KEY is optional; anonymous calls share a rate-limit pool", "Relevance search exposes at most 1,000 ranked matches; --paper-id with --relation references or citations reads the corresponding paginated edges", "Abstracts may be unavailable; citation counts are source-specific", "Use as a complement selected for the research question"]
+      "limits": ["SEMANTIC_SCHOLAR_API_KEY is optional; anonymous calls share a rate-limit pool","Relevance search exposes at most 1,000 ranked matches; --paper-id with --relation references or citations reads the corresponding paginated edges","Abstracts may be unavailable; citation counts are source-specific","Use as a complement selected for the research question","--bulk preserves the whole server batch and --token continues it; relevance/edges use --offset."]
     },
     {
       "id": "pubmed-api",
@@ -342,6 +342,36 @@
       "providers": ["extract"],
       "output": ["title", "html"],
       "limits": ["Use as a fallback when the primary extractor fails", "It does not perform search"]
+    },
+    {
+      "id": "dblp-api",
+      "display_name": "DBLP publications and conference volumes",
+      "kind": "public-http-api",
+      "source": "https://dblp.org/faq/How+to+use+the+dblp+search+API.html",
+      "requires_api_key": false,
+      "status": "local-included-via-fast-search",
+      "platforms": [
+        "academic",
+        "google-scholar"
+      ],
+      "providers": [
+        "dblp"
+      ],
+      "output": [
+        "title",
+        "authors",
+        "year",
+        "venue",
+        "doi",
+        "dblp_key",
+        "official_page",
+        "search_metadata"
+      ],
+      "limits": [
+        "h/f paginate publication search; --venue-url enumerates the chosen public volume XML",
+        "Bibliographic coverage only, no abstract/full-text claim",
+        "Stop on access/challenge responses; do not bypass or silently retry"
+      ]
     }
   ]
 }

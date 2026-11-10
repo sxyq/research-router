@@ -188,6 +188,11 @@ def complete_dispatch_packet(
         if not isinstance(agent_platform["selection_reason"], str):
             raise PlanError(f"platforms[{platform_id}].selection_reason must be a string")
         packet["selection_reason"] = agent_platform["selection_reason"]
+    if platform_id in {"academic", "google-scholar"}:
+        packet["requirement"] = dict(requirement)
+        packet["source_tasks"] = [{"platform_id": platform_id, "queries": queries,
+                                   "goal": packet["goal"], "evidence": evidence,
+                                   "stop_condition": packet["stop_condition"]}]
     return packet
 
 
@@ -233,9 +238,14 @@ def resolve_route_plan(value: Any) -> dict[str, Any]:
         seen.add(canonical)
         packet_input = dict(agent_platform)
         packet_input["_require_queries"] = interaction_mode == "direct"
-        platforms.append(
-            complete_dispatch_packet(packet_input, requirement=requirement, depth=value["depth"])
-        )
+        packet = complete_dispatch_packet(packet_input, requirement=requirement, depth=value["depth"])
+        academic = next((p for p in platforms if p["platform_id"] in {"academic", "google-scholar"}), None)
+        if canonical in {"academic", "google-scholar"} and academic is not None:
+            academic["source_tasks"].extend(packet["source_tasks"])
+            for field in ("queries", "scripts", "search_components", "optional_enhancements"):
+                academic[field] = list(dict.fromkeys(academic[field] + packet[field]))
+        else:
+            platforms.append(packet)
 
     result: dict[str, Any] = {
         "requirement": requirement,

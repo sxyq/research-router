@@ -198,6 +198,8 @@ def brief_for_manifest(path: Path) -> list[dict[str, object]]:
     briefs: list[dict[str, object]] = []
     for paper in read_manifest(path):
         local_pdf = Path(str(paper.get("local_pdf") or ""))
+        if not local_pdf.is_absolute():
+            local_pdf = path.parent / local_pdf
         if not local_pdf.is_file():
             briefs.append(
                 {
