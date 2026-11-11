@@ -27,7 +27,7 @@ Use the smallest stage that answers the request. This staged flow applies to pap
 
 1. `discovery`: return candidate metadata and links. A Google Scholar result snippet is discovery-only and is not a complete abstract.
 2. `paper-brief`: for papers selected by the Agent under the user's research request, supplement the abstract from a trusted source, extract the paper's section outline, and record only contributions explicitly stated by the authors. Use `academic-evidence/scripts/extract_paper_brief.py` for a local PDF.
-3. `full-audit`: only after an explicit request for detailed evidence, read the primary PDF or body for methods, results, limitations, and exact quotations.
+3. `full-audit`: only after the user explicitly asks to audit citations, verify claim-to-paper support, or collect primary-paper evidence. Research depth, literature-review, and related-work requests alone do not trigger it. Read the primary PDF or body for methods, results, limitations, and exact quotations.
 
 `paper-brief` should report missing abstract, outline, or contribution fields as unavailable. Do not infer a contribution and label it as author-stated. A formal table of contents is uncommon in papers; use `section_outline` for headings instead.
 

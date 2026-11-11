@@ -103,7 +103,7 @@ Google Scholar 没有稳定的官方免 Key API；本地 provider 低频访问�
 Google Scholar discovery
   -> OpenAlex/arXiv/Crossref/publisher metadata enrichment
   -> paper-brief: abstract + section outline + author-stated contributions
-  -> explicit full-audit: primary PDF/body evidence
+  -> full-audit only on the user's explicit request: primary PDF/body evidence
 ```
 
 本地 PDF 的中间结果可运行：

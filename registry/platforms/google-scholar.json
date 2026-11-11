@@ -10,7 +10,7 @@
   "adapter_type": "bundled-academic-workflow",
   "access_mode": "public-html-and-public-metadata",
   "status": "router-registered-local",
-  "optional_enhancements": ["literature-evidence-audit","anysearch"],
+  "optional_enhancements": ["anysearch"],
   "script_note": "Keep fast_search.py --provider google-scholar for public discovery. --provider serpapi-scholar is an optional third-party alternative selected explicitly with SERPAPI_API_KEY. Enrich selected records with relevant metadata providers and academic_public.py without broadening the user's source scope. Academic/Scholar share one academic-local packet with separate source_tasks; retain date scope and the complete candidate collection. DBLP is another source, not a new route. PDF acquisition/reading directly uses the existing Paper Reading leaf.",
   "capabilities": ["paper discovery", "title and author lookup", "year lookup", "citation and version lookup", "abstract snippet discovery", "PDF candidate discovery", "paper brief"],
   "retrieval_stages": {

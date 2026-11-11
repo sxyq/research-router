@@ -273,6 +273,8 @@ discovery / continue paging -> retained candidates -> selected-source reading ->
 
 学术仍使用一个 `academic-local` 任务，Academic／Scholar 的来源限定放在各自 `source_tasks`。按问题选用 Scholar、OpenAlex、Semantic Scholar、DBLP、arXiv、Crossref 或 PubMed，保留全部取得的候选、来源和续取信息。指定会议时可枚举对应 DBLP 卷目录。已选 HTML 用 `academic_public.py` 读取；PDF 获取与结构化阅读直接调用现有 Paper Reading 叶子，不重跑发现或旧编号下载链。已有 PDF 原位复用。`extract_paper_brief.py` 保留本地 PDF 摘要提取职责。
 
+`literature-evidence-audit` 仅在用户点名该 Skill，或明确要求核验引文、论点与论文的支持关系、原文证据时调用；不会因学术研究、`deep` 深度或综述任务自动启动。
+
 详细调用方式见 [references/search-components.md](references/search-components.md)。
 
 小众技术论坛使用 `forum-search` 读取公开 Discourse JSON。当前目录中的 Rust Users、Kubernetes Discuss、Docker Community、NixOS Discourse 和 Home Assistant Community 已有公开端点记录；Lobsters、Hacker News、NodeSeek、HostLoc 等非 Discourse 站点不套用此适配器。详细范围见 [references/small-forums.md](references/small-forums.md)。

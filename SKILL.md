@@ -138,6 +138,8 @@ For registered platforms without a bundled native endpoint, `scripts/platform_di
 
 Use the existing `academic-local` as one academic task at every depth. Academic and Google Scholar share its dispatch packet, with separate `source_tasks` preserving each source's queries and constraints; this is an exception only for these academic entries. Respect a Scholar-only request. Providers are sources inside this task, not new platforms or Router layers.
 
+`literature-evidence-audit` is user-invoked only. Call it when the user names the Skill or explicitly asks to audit citations, verify claim-to-paper support, or collect supporting passages from primary papers. Do not call it because the scene is academic, the depth is `deep`, or the task is a literature review or related-work survey. When requested, use the existing `academic-evidence` full-audit stage and Paper Reading acquisition path; do not start another discovery or numbered-PDF workflow.
+
 For academic tasks, saved query results, candidate provenance and actual reading scope are the execution record. Route scoring, experience logs and feedback collection run only when requested; they are not additional steps for ordinary paper research.
 
 Retain the complete retrieved candidate collection, identifiers, versions, source observations, query/time scope and pagination. Ranking determines reading order, not candidate deletion. Continue discovery for concrete missing terms, sources, pages or known seed papers. Select only the papers needed for the answer and reuse their existing files.

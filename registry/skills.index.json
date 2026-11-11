@@ -176,12 +176,13 @@
       "id": "literature-evidence-audit",
       "availability": "optional-external",
       "display_name": "Literature Evidence Audit",
-      "role": "primary-paper PDF evidence verification",
+      "role": "User-requested primary-paper evidence audit; never selected automatically",
       "kind": "academic-evidence",
       "source": "local:${CODEX_HOME}/skills/literature-evidence-audit/SKILL.md",
       "load": "on-demand",
       "platforms": ["academic", "google-scholar"],
-      "status": "local-installed"
+      "status": "local-installed",
+      "limits": ["Invoke only when the user names this Skill or explicitly requests a citation or claim-to-paper evidence audit; academic depth and literature-review tasks alone do not trigger it"]
     },
     {
       "id": "paper-research-router",

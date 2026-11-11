@@ -9,7 +9,7 @@
   "adapter_type": "bundled-academic-workflow",
   "access_mode": "public-or-pdf",
   "status": "router-registered",
-  "optional_enhancements": ["autocli","anysearch","literature-evidence-audit"],
+  "optional_enhancements": ["autocli","anysearch"],
   "script_note": "One academic-local route selects OpenAlex, Crossref, arXiv, Semantic Scholar, PubMed, or public Scholar providers by coverage. SerpApi Scholar is an explicit optional credentialed provider. academic_public.py reads selected public metadata and HTML evidence. Academic/Scholar share one academic-local packet with separate source_tasks; retain date scope and the complete candidate collection. DBLP is another source, not a new route. PDF acquisition/reading directly uses the existing Paper Reading leaf.",
   "capabilities": ["paper discovery", "author and venue lookup", "full-text retrieval", "citation evidence"],
   "retrieval_stages": ["discovery", "paper-brief", "full-audit"],
